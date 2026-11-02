@@ -1,31 +1,18 @@
 import 'server-only';
 import { apiRequest } from '@/lib/http/api-client';
-import { ApiError } from '@/lib/http/errors';
 import type { Services } from '../contracts';
+import { httpAdmin } from './admin';
+import { backendAuth } from './auth';
+import { enc } from './shared';
 
 // Implementación contra la API .NET. Cada método es una llamada fina: la lógica de negocio
 // (corrección, límites de tiempo, reglas del tutor) vive en el backend.
-// Las rutas son la PROPUESTA de contrato para el equipo .NET (ver README › «Contrato de la API»).
-
-const enc = encodeURIComponent;
-
-/** 401 al iniciar sesión = credenciales incorrectas, no un error del sistema. */
-async function nullOn401<T>(promise: Promise<T>): Promise<T | null> {
-  try {
-    return await promise;
-  } catch (error) {
-    if (error instanceof ApiError && error.code === 'unauthorized') return null;
-    throw error;
-  }
-}
+// Autenticación y administración usan endpoints que YA existen en el backend; el resto de rutas
+// son la PROPUESTA de contrato para el equipo .NET (ver README › «Contrato de la API»).
 
 export const httpServices: Services = {
-  auth: {
-    loginStudent: (input) => nullOn401(apiRequest('/auth/student/login', { method: 'POST', body: input })),
-    loginFamily: (input) => nullOn401(apiRequest('/auth/family/login', { method: 'POST', body: input })),
-    me: (token) => nullOn401(apiRequest('/auth/me', { token })),
-    logout: (token) => apiRequest('/auth/logout', { method: 'POST', token }),
-  },
+  auth: backendAuth,
+  admin: httpAdmin,
 
   students: {
     getProfile: ({ token }) => apiRequest('/students/me', { token }),

@@ -7,7 +7,8 @@ import { loginFamilyAction, loginStudentAction } from '../actions';
 import styles from './login.module.css';
 
 // Ingreso amigable para niños: usuario + 3 figuras secretas (6–11 años).
-// Familia: correo + contraseña (funciona incluso antes de que cargue el JavaScript: Server Action directa).
+// Familia y equipo: correo + contraseña (funciona incluso antes de que cargue el JavaScript: Server Action directa).
+// Ambos usan el mismo ingreso; el servidor decide a qué área entra cada uno según su rol.
 // El límite de intentos lo aplica el servidor; aquí solo se muestra el mensaje.
 
 const PICTOGRAMS = ['🦊', '🚀', '🍕', '🎮', '⭐', '🌈', '🐢', '🎨', '⚽'] as const;
@@ -16,12 +17,49 @@ const SECRET_LENGTH = 3;
 export interface DemoCredentials {
   student: { username: string; pictograms: readonly string[] };
   family: { email: string; password: string };
+  admin: { email: string; password: string };
 }
 
 interface Props {
   next?: string;
   expired?: boolean;
   demo?: DemoCredentials;
+  /** Alumno con usuario y contraseña de texto (backend real) en vez de figuras. */
+  passwordLogin?: boolean;
+}
+
+function StudentPasswordForm({ next }: Pick<Props, 'next'>) {
+  const [state, formAction, pending] = useActionState(loginStudentAction, {});
+  const [visible, setVisible] = useState(false);
+  return (
+    <form action={formAction} className={styles.form}>
+      {next && <input type="hidden" name="next" value={next} />}
+      <label className="label">
+        Tu usuario
+        <input className="input" name="username" autoComplete="username" placeholder="Ej.: P99000001" required />
+      </label>
+      <label className="label">
+        Contraseña
+        <span className={styles.passwordWrap}>
+          <input className={`input ${styles.passwordInput}`} name="password" type={visible ? 'text' : 'password'} autoComplete="current-password" required />
+          <button
+            type="button"
+            className={styles.reveal}
+            onClick={() => setVisible((v) => !v)}
+            aria-pressed={visible}
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          >
+            {visible ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </span>
+      </label>
+      {state.error && <p className={styles.error} role="alert">{state.error}</p>}
+      <button className="btn btn--primary btn--lg" type="submit" disabled={pending}>
+        {pending ? 'Entrando…' : 'Entrar a mi aula'}
+      </button>
+    </form>
+  );
 }
 
 function StudentForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
@@ -68,15 +106,21 @@ function StudentForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
   );
 }
 
-function FamilyForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
+const EMAIL_FORM_COPY = {
+  family: { email: 'Correo de la familia', placeholder: 'familia@correo.com', submit: 'Entrar como familia', help: '¿Primera vez? Usa el enlace que te enviamos por WhatsApp al matricular.' },
+  staff: { email: 'Correo del equipo', placeholder: 'nombre@matefacil.pe', submit: 'Entrar al panel', help: 'Para el equipo de Mate Fácil: administración de usuarios, familias y cursos.' },
+} as const;
+
+function EmailForm({ next, defaultEmail, variant }: Pick<Props, 'next'> & { defaultEmail?: string; variant: keyof typeof EMAIL_FORM_COPY }) {
   const [state, formAction, pending] = useActionState(loginFamilyAction, {});
   const [visible, setVisible] = useState(false);
+  const copy = EMAIL_FORM_COPY[variant];
   return (
     <form action={formAction} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
       <label className="label">
-        Correo de la familia
-        <input className="input" name="email" type="email" autoComplete="email" placeholder="familia@correo.com" required defaultValue={demo?.family.email} />
+        {copy.email}
+        <input className="input" name="email" type="email" autoComplete="email" placeholder={copy.placeholder} required defaultValue={defaultEmail} />
       </label>
       <label className="label">
         Contraseña
@@ -96,15 +140,15 @@ function FamilyForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
       </label>
       {state.error && <p className={styles.error} role="alert">{state.error}</p>}
       <button className="btn btn--primary btn--lg" type="submit" disabled={pending}>
-        {pending ? 'Entrando…' : 'Entrar como familia'}
+        {pending ? 'Entrando…' : copy.submit}
       </button>
-      <p className={styles.help}>¿Primera vez? Usa el enlace que te enviamos por WhatsApp al matricular.</p>
+      <p className={styles.help}>{copy.help}</p>
     </form>
   );
 }
 
-export function LoginForms({ next, expired, demo }: Props) {
-  const defaultTab = next?.startsWith('/familia') ? 'family' : 'student';
+export function LoginForms({ next, expired, demo, passwordLogin }: Props) {
+  const defaultTab = next?.startsWith('/familia') ? 'family' : next?.startsWith('/admin') ? 'staff' : 'student';
   return (
     <>
       {expired && <p className={styles.notice}>Tu sesión terminó. Vuelve a ingresar para continuar.</p>}
@@ -113,8 +157,9 @@ export function LoginForms({ next, expired, demo }: Props) {
         variant="segmented"
         defaultTab={defaultTab}
         items={[
-          { id: 'student', label: 'Soy alumno', panel: <StudentForm next={next} demo={demo} /> },
-          { id: 'family', label: 'Soy familia', panel: <FamilyForm next={next} demo={demo} /> },
+          { id: 'student', label: 'Soy alumno', panel: passwordLogin ? <StudentPasswordForm next={next} /> : <StudentForm next={next} demo={demo} /> },
+          { id: 'family', label: 'Soy familia', panel: <EmailForm next={next} variant="family" defaultEmail={demo?.family.email} /> },
+          { id: 'staff', label: 'Equipo', panel: <EmailForm next={next} variant="staff" defaultEmail={demo?.admin.email} /> },
         ]}
       />
       {demo && (
@@ -122,6 +167,7 @@ export function LoginForms({ next, expired, demo }: Props) {
           <summary>Datos de prueba (modo demo)</summary>
           <p>Alumno: <code>{demo.student.username}</code> + {demo.student.pictograms.join(' ')}</p>
           <p>Familia: <code>{demo.family.email}</code> / <code>{demo.family.password}</code></p>
+          <p>Equipo: <code>{demo.admin.email}</code> / <code>{demo.admin.password}</code></p>
         </details>
       )}
     </>

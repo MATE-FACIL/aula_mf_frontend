@@ -1,0 +1,68 @@
+/* Panel de administración: mismos tokens del tema (claro/oscuro) que el resto del aula. */
+
+/* ── Tablas ─────────────────────────────────────────────────────────── */
+.tableWrap { overflow-x: auto; border: var(--borde); border-radius: var(--radio); background: var(--sup); }
+.table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.table th { text-align: left; font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; color: var(--tx2); padding: .7rem .9rem; border-bottom: var(--borde-fino); white-space: nowrap; }
+.table td { padding: .7rem .9rem; border-top: 1px solid var(--sup2); vertical-align: middle; }
+.table tbody tr:hover { background: var(--sup2); }
+.table a { font-weight: 800; text-decoration: none; }
+.table a:hover { text-decoration: underline; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sub { display: block; color: var(--tx2); font-size: .8rem; font-weight: 600; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .85rem; }
+
+/* ── Insignias ──────────────────────────────────────────────────────── */
+.badges { display: flex; flex-wrap: wrap; gap: .3rem; }
+.badge { display: inline-block; border-radius: 99px; padding: .1rem .55rem; font-size: .74rem; font-weight: 800; border: 2px solid transparent; white-space: nowrap; }
+.role_student { background: color-mix(in srgb, var(--ruta-innovator) 16%, transparent); color: var(--tx); border-color: var(--ruta-innovator); }
+.role_guardian { background: color-mix(in srgb, var(--ruta-creator) 18%, transparent); color: var(--tx); border-color: var(--ruta-creator); }
+.role_administrator { background: color-mix(in srgb, var(--acento) 16%, transparent); color: var(--tx); border-color: var(--acento); }
+.role_instructor { background: color-mix(in srgb, var(--ruta-future) 16%, transparent); color: var(--tx); border-color: var(--ruta-future); }
+.status_active { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--tx); border-color: var(--ok); }
+.status_inactive { background: color-mix(in srgb, var(--error) 14%, transparent); color: var(--tx); border-color: var(--error); }
+.status_no_account { background: var(--sup2); color: var(--tx2); border-color: var(--tx2); }
+
+/* ── Filtros y paginación ───────────────────────────────────────────── */
+.filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; }
+.filters :global(.label) { flex: 1 1 12rem; }
+.filters .grow { flex: 3 1 18rem; }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; color: var(--tx2); font-size: .9rem; }
+.pagerLinks { display: flex; gap: .5rem; }
+.disabled { opacity: .45; pointer-events: none; }
+
+/* ── Formularios ────────────────────────────────────────────────────── */
+.form { display: grid; gap: 1rem; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem 1rem; }
+.full { grid-column: 1 / -1; }
+.fieldError { color: var(--error); font-size: .82rem; font-weight: 700; }
+.form :global(.input)[aria-invalid='true'] { border-color: var(--error); }
+.formError { color: var(--error); font-weight: 800; }
+.hint { color: var(--tx2); font-size: .85rem; font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.inline { display: inline-flex; gap: .4rem; align-items: center; margin: 0; }
+textarea.textarea { min-height: 6rem; resize: vertical; font: inherit; }
+.danger { background: var(--error); color: #fff; }
+
+/* ── Credenciales emitidas (se muestran una vez) ────────────────────── */
+.credentials { display: grid; gap: .6rem; padding: 1rem; border: var(--borde); border-radius: var(--radio); background: var(--login-verde); color: var(--navy); }
+.credentials dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; margin: 0; }
+.credentials dt { font-weight: 800; }
+.credentials dd { margin: 0; }
+.warning { background: var(--aviso-fondo); color: var(--aviso); border-radius: .6rem; padding: .5rem .7rem; font-weight: 700; font-size: .88rem; }
+
+/* ── Listas de vínculos y detalle ───────────────────────────────────── */
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.listItem { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .6rem .8rem; border: var(--borde-fino); border-radius: .8rem; background: var(--sup); }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: .45rem 1rem; margin: 0; }
+.facts dt { color: var(--tx2); font-weight: 700; }
+.facts dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+
+/* ── Portada ────────────────────────────────────────────────────────── */
+.cover { width: 100%; max-width: 22rem; aspect-ratio: 16 / 9; object-fit: cover; border: var(--borde); border-radius: var(--radio); background: var(--sup2); }
+.coverEmpty { display: grid; place-items: center; color: var(--tx2); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .hideSm { display: none; }
+}

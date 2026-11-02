@@ -31,6 +31,19 @@ import type {
   TutorRequest,
   Unit,
 } from '@/types/domain';
+import type {
+  AdminCourse,
+  AdminSummary,
+  AdminUserDetail,
+  AdminUserListItem,
+  CourseCategory,
+  IssuedCredentials,
+  NewGuardianInput,
+  NewStudentInput,
+  Page,
+  SaveCourseInput,
+  UserListFilters,
+} from '@/types/admin';
 
 /** Contexto de cada llamada: el token de la sesión y el usuario ya verificado. */
 export interface RequestContext {
@@ -46,7 +59,8 @@ export interface AuthResult {
 }
 
 export interface AuthService {
-  loginStudent(input: { username: string; pictograms: string[] }): Promise<AuthResult | null>;
+  loginStudent(input: { username: string; pictograms?: string[]; password?: string }): Promise<AuthResult | null>;
+  /** Ingreso con correo: familias y equipo. El rol (familia o admin) lo decide el backend, no el formulario. */
   loginFamily(input: { email: string; password: string }): Promise<AuthResult | null>;
   /** Devuelve el usuario del token o null si el token no es válido / venció. */
   me(token: string): Promise<SessionUser | null>;
@@ -124,6 +138,32 @@ export interface FamilyService {
   getMembership(ctx: RequestContext): Promise<Membership>;
 }
 
+/** Panel de administración. Toda operación exige la sesión de un administrador. */
+export interface AdminService {
+  getSummary(ctx: RequestContext): Promise<AdminSummary>;
+  listUsers(ctx: RequestContext, filters: UserListFilters): Promise<Page<AdminUserListItem>>;
+  /** null si la persona no existe. */
+  getUser(ctx: RequestContext, userId: string): Promise<AdminUserDetail | null>;
+  createStudent(ctx: RequestContext, input: NewStudentInput): Promise<IssuedCredentials>;
+  createGuardian(ctx: RequestContext, input: NewGuardianInput): Promise<IssuedCredentials>;
+  setUserActive(ctx: RequestContext, userId: string, active: boolean): Promise<void>;
+  linkStudent(ctx: RequestContext, guardianId: string, studentId: string): Promise<void>;
+  unlinkStudent(ctx: RequestContext, guardianId: string, studentId: string): Promise<void>;
+
+  listCourses(ctx: RequestContext): Promise<AdminCourse[]>;
+  /** null si el curso no existe. */
+  getCourse(ctx: RequestContext, courseId: string): Promise<AdminCourse | null>;
+  createCourse(ctx: RequestContext, input: SaveCourseInput): Promise<AdminCourse>;
+  updateCourse(ctx: RequestContext, courseId: string, input: SaveCourseInput): Promise<AdminCourse>;
+  setCoursePublished(ctx: RequestContext, courseId: string, published: boolean): Promise<AdminCourse>;
+  replaceCourseCover(ctx: RequestContext, courseId: string, file: File): Promise<AdminCourse>;
+
+  listCategories(ctx: RequestContext): Promise<CourseCategory[]>;
+  createCategory(ctx: RequestContext, name: string): Promise<CourseCategory>;
+  renameCategory(ctx: RequestContext, categoryId: string, name: string): Promise<CourseCategory>;
+  deleteCategory(ctx: RequestContext, categoryId: string): Promise<void>;
+}
+
 export interface Services {
   auth: AuthService;
   students: StudentService;
@@ -133,4 +173,5 @@ export interface Services {
   assessments: AssessmentService;
   schedule: ScheduleService;
   family: FamilyService;
+  admin: AdminService;
 }

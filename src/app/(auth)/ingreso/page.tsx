@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/features/theme/theme-toggle';
 import styles from '@/features/auth/components/login.module.css';
 import { getSession } from '@/server/auth/dal';
 import { HOME_BY_ROLE } from '@/server/auth/constants';
-import { isMockMode } from '@/services';
+import { isMockMode, usesPasswordLogin } from '@/services';
 import { DEMO_CREDENTIALS } from '@/services/mock/data';
 
 export const metadata: Metadata = { title: 'Ingresar' };
@@ -43,5 +43,5 @@ async function LoginContent({ searchParams }: Pick<PageProps<'/ingreso'>, 'searc
   }
 
   const next = typeof params.next === 'string' ? params.next : undefined;
-  return <LoginForms next={next} expired={expired} demo={isMockMode ? DEMO_CREDENTIALS : undefined} />;
+  return <LoginForms next={next} expired={expired} demo={isMockMode ? DEMO_CREDENTIALS : undefined} passwordLogin={usesPasswordLogin} />;
 }

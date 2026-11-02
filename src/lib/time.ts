@@ -26,6 +26,10 @@ export const formatLongDate = (iso: string | Date, timeZone: string) =>
 export const formatShortWeekday = (iso: string | Date, timeZone: string) =>
   capitalize(formatter(timeZone, { weekday: 'short' }).format(new Date(iso)).replace('.', ''));
 
+/** «2 nov. 2026»: fechas de registro en tablas. */
+export const formatShortDate = (iso: string | Date, timeZone: string) =>
+  formatter(timeZone, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso));
+
 export const formatDayNumber = (iso: string | Date, timeZone: string) =>
   formatter(timeZone, { day: 'numeric' }).format(new Date(iso));
 

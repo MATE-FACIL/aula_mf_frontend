@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 // Iconos de la navegación: SVG en línea (sin dependencias ni peticiones), heredan el color del texto.
 
-export type NavIconName = 'home' | 'route' | 'lessons' | 'exams' | 'classes' | 'trophy';
+export type NavIconName = 'home' | 'route' | 'lessons' | 'exams' | 'classes' | 'trophy' | 'dashboard' | 'users' | 'family' | 'courses' | 'categories';
 
 const PATHS: Record<NavIconName, ReactNode> = {
   // Casa
@@ -44,6 +44,46 @@ const PATHS: Record<NavIconName, ReactNode> = {
       <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
       <path d="M3.5 10h17M8 3v4M16 3v4" />
       <path d="m9 15 2.2 2.2L15.5 13" />
+    </>
+  ),
+  // Cuatro paneles (resumen)
+  dashboard: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="9" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="5" rx="1.5" />
+      <rect x="13.5" y="11.5" width="7" height="9" rx="1.5" />
+      <rect x="3.5" y="15.5" width="7" height="5" rx="1.5" />
+    </>
+  ),
+  // Dos personas
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8" />
+    </>
+  ),
+  // Adulto con niño
+  family: (
+    <>
+      <circle cx="8" cy="6" r="3" />
+      <path d="M3 21v-4.5a5 5 0 0 1 10 0V21" />
+      <circle cx="17.5" cy="11" r="2.3" />
+      <path d="M14 21v-2.5a3.5 3.5 0 0 1 7 0V21" />
+    </>
+  ),
+  // Libro abierto
+  courses: (
+    <>
+      <path d="M12 6.5C10 5 7.5 4.5 3.5 4.5v14c4 0 6.5.5 8.5 2 2-1.5 4.5-2 8.5-2v-14c-4 0-6.5.5-8.5 2z" />
+      <path d="M12 6.5v14" />
+    </>
+  ),
+  // Etiqueta
+  categories: (
+    <>
+      <path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-7 7a1.4 1.4 0 0 1-2 0z" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
     </>
   ),
   // Trofeo
