@@ -1,0 +1,97 @@
+import type { NewGuardianInput, NewStudentInput, SaveCourseInput } from '@/types/admin';
+
+// Validación de formularios del panel ANTES de llamar a la API (mismos límites que el backend .NET):
+// evita viajes inútiles y devuelve errores por campo para mostrarlos junto a cada input.
+// El backend vuelve a validar todo: esto es comodidad, no seguridad.
+
+export type FieldErrors = Partial<Record<string, string>>;
+export type Parsed<T> = { ok: true; value: T } | { ok: false; fieldErrors: FieldErrors };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DOCUMENT_RE = /^[A-Za-z0-9-]{4,20}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function text(form: FormData, name: string, max: number): string {
+  const value = form.get(name);
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+const optional = (value: string) => value || undefined;
+
+export const isUuid = (value: unknown): value is string => typeof value === 'string' && UUID_RE.test(value);
+
+function personNames(form: FormData, errors: FieldErrors) {
+  const givenNames = text(form, 'givenNames', 150);
+  const firstSurname = text(form, 'firstSurname', 100);
+  const secondSurname = optional(text(form, 'secondSurname', 100));
+  if (!givenNames) errors.givenNames = 'Escribe los nombres.';
+  if (!firstSurname) errors.firstSurname = 'Escribe el primer apellido.';
+  return { givenNames, firstSurname, secondSurname };
+}
+
+export function parseStudentForm(form: FormData): Parsed<NewStudentInput> {
+  const errors: FieldErrors = {};
+  const names = personNames(form, errors);
+  const email = optional(text(form, 'email', 254));
+  const documentType = text(form, 'documentType', 32) || 'DNI';
+  const documentNumber = text(form, 'documentNumber', 50);
+  const guardian = text(form, 'guardianUserId', 36);
+
+  if (email && !EMAIL_RE.test(email)) errors.email = 'El correo no es válido.';
+  if (!documentNumber) errors.documentNumber = 'El documento es obligatorio: con él se arma el usuario.';
+  else if (!DOCUMENT_RE.test(documentNumber)) errors.documentNumber = 'Usa solo letras, números o guiones (4 a 20).';
+  if (guardian && !isUuid(guardian)) errors.guardianUserId = 'El padre o tutor elegido no es válido.';
+
+  if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
+  return { ok: true, value: { ...names, email, documentType, documentNumber, guardianUserId: guardian || undefined } };
+}
+
+export function parseGuardianForm(form: FormData): Parsed<NewGuardianInput> {
+  const errors: FieldErrors = {};
+  const names = personNames(form, errors);
+  const email = text(form, 'email', 254);
+  const documentNumber = optional(text(form, 'documentNumber', 50));
+  const documentType = documentNumber ? text(form, 'documentType', 32) || 'DNI' : undefined;
+
+  if (!email) errors.email = 'El correo es obligatorio: es su usuario para ingresar.';
+  else if (!EMAIL_RE.test(email)) errors.email = 'El correo no es válido.';
+  if (documentNumber && !DOCUMENT_RE.test(documentNumber)) errors.documentNumber = 'Usa solo letras, números o guiones (4 a 20).';
+
+  if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
+  return { ok: true, value: { ...names, email, documentType, documentNumber } };
+}
+
+const COURSE_TEXT_FIELDS = ['shortDescription', 'fullDescription', 'objectives', 'syllabus', 'targetAudience', 'prerequisites'] as const;
+const COURSE_TEXT_MAX = 8000;
+
+export function parseCourseForm(form: FormData): Parsed<SaveCourseInput> {
+  const errors: FieldErrors = {};
+  const title = text(form, 'title', 200);
+  const category = text(form, 'categoryId', 36);
+  if (!title) errors.title = 'El curso necesita un título.';
+  if (category && !isUuid(category)) errors.categoryId = 'La categoría elegida no es válida.';
+  if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
+
+  const fields = Object.fromEntries(COURSE_TEXT_FIELDS.map((name) => [name, text(form, name, COURSE_TEXT_MAX) || null])) as Record<
+    (typeof COURSE_TEXT_FIELDS)[number],
+    string | null
+  >;
+  return { ok: true, value: { title, categoryId: category || null, ...fields } };
+}
+
+export function parseCategoryName(form: FormData): Parsed<string> {
+  const name = text(form, 'name', 150);
+  return name ? { ok: true, value: name } : { ok: false, fieldErrors: { name: 'Escribe un nombre.' } };
+}
+
+// ─── Portada del curso (mismos límites que Courses:Cover en el backend) ───
+
+export const COVER_MAX_BYTES = 5 * 1024 * 1024;
+export const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+export function checkCover(file: { size: number; type: string } | null): string | null {
+  if (!file || file.size === 0) return 'Elige una imagen.';
+  if (!COVER_TYPES.includes(file.type as (typeof COVER_TYPES)[number])) return 'Usa una imagen JPG, PNG o WebP.';
+  if (file.size > COVER_MAX_BYTES) return 'La imagen pesa más de 5 MB.';
+  return null;
+}

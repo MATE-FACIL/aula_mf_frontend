@@ -1,36 +1,48 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Logo } from '@/components/brand/logo';
-import { STUDENT_NAV } from '@/config/navigation';
+import { ADMIN_NAV, STUDENT_NAV, type NavItem } from '@/config/navigation';
 import { cn } from '@/lib/cn';
 import { OfflineBanner } from '@/features/pwa/offline-banner';
 import { ThemeToggle } from '@/features/theme/theme-toggle';
 import styles from './app-shell.module.css';
-import { SideNav } from './side-nav';
+import { SideNav, SideNavFallback } from './side-nav';
 
 // Armazón estático del aula: se prerenderiza y llega al instante.
 // La parte que depende de la sesión (estrellas, avisos, perfil) entra por `status` dentro de un <Suspense>.
 
+type Area = 'student' | 'family' | 'admin';
+
 interface Props {
-  area: 'student' | 'family';
+  area: Area;
   status: ReactNode;
   children: ReactNode;
 }
 
+const AREAS: Record<Area, { home: string; label: string; nav?: NavItem[] }> = {
+  student: { home: '/inicio', label: 'Alumno', nav: STUDENT_NAV },
+  family: { home: '/familia', label: 'Familia' },
+  admin: { home: '/admin', label: 'Administración', nav: ADMIN_NAV },
+};
+
 export function AppShell({ area, status, children }: Props) {
-  const home = area === 'student' ? '/inicio' : '/familia';
+  const { home, label, nav } = AREAS[area];
   return (
     <div className={cn(styles.shell, area === 'family' && styles.family)}>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
       <header className={cn(styles.topbar, 'no-print')}>
         <Logo href={home} />
-        <span className={styles.area}>{area === 'student' ? 'Alumno' : 'Familia'}</span>
+        <span className={styles.area}>{label}</span>
         <div className={styles.status}>
           <ThemeToggle />
           {status}
         </div>
       </header>
       <div className={styles.frame}>
-        {area === 'student' && <SideNav items={STUDENT_NAV} />}
+        {nav && (
+          <Suspense fallback={<SideNavFallback items={nav} />}>
+            <SideNav items={nav} />
+          </Suspense>
+        )}
         <main id="contenido" className={styles.content}>
           <OfflineBanner />
           {children}

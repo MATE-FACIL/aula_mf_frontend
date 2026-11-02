@@ -28,12 +28,14 @@ export const DEMO_IDS = {
   student: 'stu-valentina',
   sibling: 'stu-mateo',
   family: 'fam-roque',
+  admin: 'adm-equipo',
 } as const;
 
 /** Credenciales de la demo (solo modo mock). */
 export const DEMO_CREDENTIALS = {
   student: { username: 'valentina.r', pictograms: ['🦊', '🚀', '🍕'] },
   family: { email: 'familia@matefacil.pe', password: 'matefacil123' },
+  admin: { email: 'admin@matefacil.pe', password: 'matefacil123' },
 } as const;
 
 export const profiles: Record<string, StudentProfile> = {

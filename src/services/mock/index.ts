@@ -4,6 +4,7 @@ import { ApiError } from '@/lib/http/errors';
 import { addDaysToKey, formatTime, localDateKey, weekdayOfKey, zonedDateTime } from '@/lib/time';
 import type { AppNotification, CalendarEvent, ChatMessage, ChildOverview, EvaluationSummary, LiveClass, QuizQuestion, Role, SessionUser, Task } from '@/types/domain';
 import type { RequestContext, Schedule, Services } from '../contracts';
+import { mockAdmin } from './admin';
 import * as data from './data';
 import { checkFractionAnswer, gradeQuiz } from './grading';
 import { tutorReply } from './tutor-engine';
@@ -83,12 +84,17 @@ function verifyToken(token: string): TokenPayload | null {
 }
 
 function userFor(sub: string, role: Role): SessionUser {
+  if (role === 'admin') return { id: sub, role, displayName: 'Equipo Mate Fácil', timeZone: 'America/Lima' };
   if (role === 'student') {
     const p = data.profiles[sub];
     return { id: sub, role, displayName: p.firstName, timeZone: p.timeZone };
   }
   return { id: sub, role, displayName: 'Familia Roque', timeZone: 'America/Lima', childIds: [data.DEMO_IDS.student, data.DEMO_IDS.sibling] };
 }
+
+/** Usuario de demostración de cada rol (el modo híbrido lo usa para dar datos mock a una sesión real). */
+export const demoUserFor = (role: Role): SessionUser =>
+  userFor(role === 'student' ? data.DEMO_IDS.student : role === 'admin' ? data.DEMO_IDS.admin : data.DEMO_IDS.family, role);
 
 function requireRole(ctx: RequestContext, role: Role) {
   if (ctx.user.role !== role) throw new ApiError('forbidden', `Se requiere el rol ${role}`, 403);
@@ -154,15 +160,21 @@ export const mockServices: Services = {
     async loginStudent({ username, pictograms }) {
       await delay();
       const demo = data.DEMO_CREDENTIALS.student;
-      const ok = username.trim().toLowerCase() === demo.username && pictograms.join('') === demo.pictograms.join('');
+      const ok = username.trim().toLowerCase() === demo.username && (pictograms ?? []).join('') === demo.pictograms.join('');
       if (!ok) return null;
       return { token: issueToken(data.DEMO_IDS.student, 'student'), user: userFor(data.DEMO_IDS.student, 'student'), expiresIn: SESSION_TTL_SEC };
     },
+    // Como en el backend real, el mismo ingreso por correo sirve a familias y al equipo.
     async loginFamily({ email, password }) {
       await delay();
-      const demo = data.DEMO_CREDENTIALS.family;
-      if (email.trim().toLowerCase() !== demo.email || password !== demo.password) return null;
-      return { token: issueToken(data.DEMO_IDS.family, 'family'), user: userFor(data.DEMO_IDS.family, 'family'), expiresIn: SESSION_TTL_SEC };
+      const normalized = email.trim().toLowerCase();
+      for (const role of ['family', 'admin'] as const) {
+        const demo = data.DEMO_CREDENTIALS[role];
+        if (normalized === demo.email && password === demo.password) {
+          return { token: issueToken(data.DEMO_IDS[role], role), user: userFor(data.DEMO_IDS[role], role), expiresIn: SESSION_TTL_SEC };
+        }
+      }
+      return null;
     },
     async me(token) {
       const payload = verifyToken(token);
@@ -352,4 +364,6 @@ export const mockServices: Services = {
       return data.membership;
     },
   },
+
+  admin: mockAdmin,
 };
