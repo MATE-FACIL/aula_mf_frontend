@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/http/api-client';
 import type { Services } from '../contracts';
 import { httpAdmin } from './admin';
 import { backendAuth } from './auth';
+import { fetchLiveSchedule } from './classes';
 import { enc } from './shared';
 
 // Implementación contra la API .NET. Cada método es una llamada fina: la lógica de negocio
@@ -46,7 +47,8 @@ export const httpServices: Services = {
   },
 
   schedule: {
-    getSchedule: ({ token }) => apiRequest('/students/me/schedule', { token }),
+    // Clases y calendario reales (SCRUM-50/51/52). Tareas, asistencia y materiales aún no existen en el backend.
+    getSchedule: async (ctx) => ({ ...(await fetchLiveSchedule(ctx)), tasks: [], attendance: [], materials: [] }),
     // Los archivos deben subirse directo al almacenamiento con una URL firmada; aquí solo van sus nombres.
     submitTask: ({ token }, taskId, submission) =>
       apiRequest(`/tasks/${enc(taskId)}/submissions`, { method: 'POST', token, body: submission }),

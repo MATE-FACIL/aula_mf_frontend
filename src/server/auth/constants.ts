@@ -3,6 +3,8 @@ import type { Role } from '@/types/domain';
 
 export const SESSION_COOKIE = 'mf_session';
 export const ROLE_COOKIE = 'mf_role';
+/** Token de renovación del backend (httpOnly). Solo existe con el backend real (modos http/hybrid). */
+export const REFRESH_COOKIE = 'mf_refresh';
 
 export const LOGIN_PATH = '/ingreso';
 

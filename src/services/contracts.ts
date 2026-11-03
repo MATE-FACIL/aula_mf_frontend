@@ -63,6 +63,8 @@ export interface AuthResult {
   user: SessionUser;
   /** Vigencia del token en segundos. */
   expiresIn: number;
+  /** Token de renovación del backend real (SCRUM-36). No existe en modo mock. */
+  refreshToken?: string | null;
 }
 
 export interface AuthService {
@@ -71,7 +73,8 @@ export interface AuthService {
   loginFamily(input: { email: string; password: string }): Promise<AuthResult | null>;
   /** Devuelve el usuario del token o null si el token no es válido / venció. */
   me(token: string): Promise<SessionUser | null>;
-  logout(token: string): Promise<void>;
+  /** Con el token de renovación, el backend revoca la sesión de ESTE dispositivo. */
+  logout(token: string, refreshToken?: string): Promise<void>;
 }
 
 export interface LearningPath {

@@ -1,6 +1,7 @@
 import 'server-only';
 import { apiRequest } from '@/lib/http/api-client';
 import { ApiError } from '@/lib/http/errors';
+import { callAuth } from '@/server/auth/backend-session';
 import type { Role, SessionUser } from '@/types/domain';
 import type { AuthResult, AuthService } from '../contracts';
 import { nullOn401 } from './shared';
@@ -45,12 +46,18 @@ async function me(token: string): Promise<SessionUser | null> {
 }
 
 async function login(path: string, body: unknown): Promise<AuthResult | null> {
-  const result = await nullOn401(apiRequest<BackendToken>(path, { method: 'POST', body }));
-  if (!result) return null;
+  // callAuth (no apiRequest): hace falta leer la cookie de renovación que manda el backend.
+  const { status, json, refreshToken } = await callAuth(path, { body });
+  if (status === 401) return null;
+  if (status === 429) throw new ApiError('rate_limited', `POST ${path} → 429`, 429);
+  const result = json as Partial<BackendToken> | undefined;
+  if (status !== 200 || typeof result?.accessToken !== 'string' || typeof result.expiresIn !== 'number') {
+    throw new ApiError(status === 400 ? 'validation' : 'server', `POST ${path} → ${status}`, status);
+  }
   // Una petición extra SOLO al ingresar: deja la sesión con el rol y el nombre verificados.
   const user = await me(result.accessToken);
   if (!user) throw new ApiError('forbidden', 'Cuenta sin rol o inactiva', 403, undefined, NO_ACCESS);
-  return { token: result.accessToken, user, expiresIn: result.expiresIn };
+  return { token: result.accessToken, user, expiresIn: result.expiresIn, refreshToken };
 }
 
 export const backendAuth: AuthService = {
@@ -58,5 +65,8 @@ export const backendAuth: AuthService = {
   // `admin/login` es el ingreso por correo del backend: sirve a familias y al equipo por igual.
   loginFamily: ({ email, password }) => login('/auth/admin/login', { email, password }),
   me,
-  logout: (token) => apiRequest('/auth/logout', { method: 'POST', token }),
+  // El backend revoca la sesión de este dispositivo a partir de su token de renovación.
+  logout: async (token, refreshToken) => {
+    await callAuth('/auth/logout', { accessToken: token, refreshToken });
+  },
 };

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { toUserMessage } from '@/lib/http/errors';
 import { cleanText, clientIp, limiters } from '@/server/action-utils';
 import { HOME_BY_ROLE, areaOf } from '@/server/auth/constants';
-import { clearSession, readSessionToken, writeSession } from '@/server/auth/session';
+import { clearSession, readRefreshToken, readSessionToken, writeSession } from '@/server/auth/session';
 import { services, usesPasswordLogin } from '@/services';
 import type { AuthResult } from '@/services/contracts';
 import type { Role } from '@/types/domain';
@@ -47,7 +47,7 @@ async function attemptLogin(kind: 'student' | 'family', formData: FormData, logi
   }
 
   limiters.login.reset(key);
-  await writeSession(result.token, result.user.role, result.expiresIn);
+  await writeSession(result.token, result.user.role, result.expiresIn, result.refreshToken);
   redirect(safeNext(formData.get('next'), result.user.role));
 }
 
@@ -73,7 +73,7 @@ export async function loginFamilyAction(_prev: LoginState, formData: FormData): 
 }
 
 export async function logoutAction(): Promise<void> {
-  const token = await readSessionToken();
-  if (token) await services.auth.logout(token).catch(() => undefined); // cerrar sesión no debe fallar por la API
+  const [token, refreshToken] = await Promise.all([readSessionToken(), readRefreshToken()]);
+  if (token) await services.auth.logout(token, refreshToken).catch(() => undefined); // cerrar sesión no debe fallar por la API
   await clearSession();
 }
