@@ -116,6 +116,8 @@ export interface AdminCourse {
   prerequisites: string | null;
   coverUrl: string | null;
   coverOriginalFileName: string | null;
+  /** Duración de cada clase en minutos (SCRUM-42). null = sin configurar (se usa 60). */
+  sessionDurationMinutes: number | null;
 }
 
 export interface SaveCourseInput {
@@ -127,6 +129,7 @@ export interface SaveCourseInput {
   syllabus: string | null;
   targetAudience: string | null;
   prerequisites: string | null;
+  sessionDurationMinutes: number | null;
 }
 
 // ─── Matrículas (SCRUM-44) ─────────────────────────────────────────────
@@ -170,4 +173,51 @@ export interface EnrollmentFilters {
   status?: EnrollmentStatus;
   page?: number;
   pageSize?: number;
+}
+
+// ─── Grupos (ediciones) y profesores (SCRUM-41) ────────────────────────
+
+export interface OfferingSession {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  virtualLink: string | null;
+}
+
+export interface CourseOffering {
+  id: string;
+  courseId: string;
+  name: string;
+  /** Solo los borradores se editan completos; publicados solo cambian el enlace de cada clase. */
+  status: 'draft' | 'published';
+  maximumCapacity: number;
+  basePrice: number;
+  currencyCode: string | null;
+  plannedSessionCount: number;
+  instructorIds: string[];
+  sessions: OfferingSession[];
+}
+
+export interface SaveOfferingInput {
+  name: string;
+  maximumCapacity: number;
+  basePrice: number;
+  currencyCode: string;
+  plannedSessionCount: number;
+  /** `id` de las sesiones existentes que se conservan; null para las nuevas. */
+  sessions: { id: string | null; startsAt: string; endsAt: string; virtualLink: string | null }[];
+}
+
+export interface Instructor {
+  id: string;
+  userId: string | null;
+  fullName: string;
+  email: string | null;
+}
+
+export interface CreatedInstructor {
+  instructorId: string;
+  userId: string;
+  loginIdentifier: string;
+  initialPassword: string;
 }

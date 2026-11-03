@@ -28,6 +28,9 @@ export function CourseForm({ course, categories }: { course?: AdminCourse; categ
           </select>
           {errors?.categoryId && <span className={styles.fieldError}>{errors.categoryId}</span>}
         </label>
+        <Field label="Duración de cada clase (minutos)" name="sessionDurationMinutes" type="number" min={30} max={240} step={5}
+          defaultValue={course?.sessionDurationMinutes ?? ''} error={errors?.sessionDurationMinutes}
+          hint="Primaria 60, secundaria 90. Se usa al armar el horario de los grupos." />
         <TextArea label="Descripción corta" name="shortDescription" defaultValue={course?.shortDescription} rows={2} hint="Se muestra en el catálogo público." />
         <TextArea label="Descripción completa" name="fullDescription" defaultValue={course?.fullDescription} rows={5} />
         <TextArea label="Objetivos" name="objectives" defaultValue={course?.objectives} />

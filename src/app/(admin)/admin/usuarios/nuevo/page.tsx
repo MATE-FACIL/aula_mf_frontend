@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Nuevo usuario' };
 export default function NewUserPage({ searchParams }: PageProps<'/admin/usuarios/nuevo'>) {
   return (
     <div className="page">
-      <PageHeader title="Nuevo usuario" description="Crea la cuenta de un alumno o de un padre o tutor. La contraseña inicial se genera automáticamente.">
+      <PageHeader title="Nuevo usuario" description="Crea la cuenta de un alumno, un padre o tutor, o un profesor. La contraseña inicial se genera automáticamente.">
         <Link className="link" href="/admin/usuarios">← Volver a usuarios</Link>
       </PageHeader>
       <section className="card">
@@ -35,5 +35,6 @@ async function NewUserForms({ searchParams }: Pick<PageProps<'/admin/usuarios/nu
     if (person?.roles.includes('guardian')) guardian = { id: person.id, fullName: person.fullName };
   }
 
-  return <CreatePersonForms guardian={guardian} defaultTab={params.tipo === 'tutor' ? 'guardian' : 'student'} />;
+  const tab = params.tipo === 'tutor' ? 'guardian' : params.tipo === 'profesor' ? 'instructor' : 'student';
+  return <CreatePersonForms guardian={guardian} defaultTab={tab} />;
 }

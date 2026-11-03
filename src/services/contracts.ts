@@ -37,14 +37,18 @@ import type {
   AdminUserDetail,
   AdminUserListItem,
   CourseCategory,
+  CourseOffering,
+  CreatedInstructor,
   Enrollment,
   EnrollmentFilters,
+  Instructor,
   IssuedCredentials,
   NewGuardianInput,
   NewStudentInput,
   OfferingSeats,
   Page,
   SaveCourseInput,
+  SaveOfferingInput,
   UserListFilters,
 } from '@/types/admin';
 
@@ -172,6 +176,18 @@ export interface AdminService {
   enroll(ctx: RequestContext, input: { studentUserId: string; courseOfferingId: string; paymentNote?: string }): Promise<Enrollment>;
   activateEnrollment(ctx: RequestContext, enrollmentId: string, paymentNote?: string): Promise<Enrollment>;
   withdrawEnrollment(ctx: RequestContext, enrollmentId: string): Promise<Enrollment>;
+
+  /** Grupos de un curso (SCRUM-41). null si el curso no existe. */
+  listOfferings(ctx: RequestContext, courseId: string): Promise<CourseOffering[] | null>;
+  getOffering(ctx: RequestContext, courseId: string, offeringId: string): Promise<CourseOffering | null>;
+  createOffering(ctx: RequestContext, courseId: string, input: SaveOfferingInput): Promise<CourseOffering>;
+  updateOffering(ctx: RequestContext, courseId: string, offeringId: string, input: SaveOfferingInput): Promise<CourseOffering>;
+  publishOffering(ctx: RequestContext, courseId: string, offeringId: string): Promise<CourseOffering>;
+  assignInstructors(ctx: RequestContext, courseId: string, offeringId: string, instructorIds: string[]): Promise<CourseOffering>;
+  updateSessionLink(ctx: RequestContext, courseId: string, offeringId: string, sessionId: string, virtualLink: string | null): Promise<CourseOffering>;
+
+  listInstructors(ctx: RequestContext): Promise<Instructor[]>;
+  createInstructor(ctx: RequestContext, input: NewGuardianInput): Promise<CreatedInstructor>;
 }
 
 export interface Services {

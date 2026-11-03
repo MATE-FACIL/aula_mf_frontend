@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkCover, parseCourseForm, parseGuardianForm, parseStudentForm } from './validation';
+import { checkCover, parseCourseForm, parseGuardianForm, parseOfferingForm, parseStudentForm } from './validation';
 
 const form = (entries: Record<string, string>) => {
   const data = new FormData();
@@ -42,7 +42,14 @@ describe('parseCourseForm', () => {
   it('convierte textos vacíos en null y exige título', () => {
     expect(parseCourseForm(form({ title: '' })).ok).toBe(false);
     const result = parseCourseForm(form({ title: 'Mate', shortDescription: 'Corta', syllabus: '  ' }));
-    expect(result.ok && result.value).toMatchObject({ title: 'Mate', categoryId: null, shortDescription: 'Corta', syllabus: null });
+    expect(result.ok && result.value).toMatchObject({ title: 'Mate', categoryId: null, shortDescription: 'Corta', syllabus: null, sessionDurationMinutes: null });
+  });
+
+  it('acepta la duración de clase por etapa y rechaza valores fuera de rango', () => {
+    const ok = parseCourseForm(form({ title: 'Mate', sessionDurationMinutes: '90' }));
+    expect(ok.ok && ok.value.sessionDurationMinutes).toBe(90);
+    expect(parseCourseForm(form({ title: 'Mate', sessionDurationMinutes: '15' })).ok).toBe(false);
+    expect(parseCourseForm(form({ title: 'Mate', sessionDurationMinutes: 'abc' })).ok).toBe(false);
   });
 });
 
@@ -52,5 +59,25 @@ describe('checkCover', () => {
     expect(checkCover({ size: 1000, type: 'image/gif' })).toMatch(/JPG/);
     expect(checkCover({ size: 6 * 1024 * 1024, type: 'image/png' })).toMatch(/5 MB/);
     expect(checkCover(null)).toMatch(/Elige/);
+  });
+});
+
+describe('parseOfferingForm', () => {
+  const session = { id: null, startsAt: '2026-11-02T22:00:00.000Z', endsAt: '2026-11-02T23:30:00.000Z', virtualLink: 'https://meet.example.com/a' };
+  const valid = { name: 'Grupo A', maximumCapacity: '8', basePrice: '180', currencyCode: 'PEN', sessions: JSON.stringify([session]) };
+
+  it('arma el grupo con la cantidad de clases del horario', () => {
+    const result = parseOfferingForm(form(valid));
+    expect(result.ok && result.value).toEqual({ name: 'Grupo A', maximumCapacity: 8, basePrice: 180, currencyCode: 'PEN', plannedSessionCount: 1, sessions: [session] });
+  });
+
+  it('rechaza horarios mal formados, enlaces no http y cupos inválidos', () => {
+    expect(parseOfferingForm(form({ ...valid, sessions: 'no-json' })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, sessions: '[]' })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, sessions: JSON.stringify([{ ...session, endsAt: session.startsAt }]) })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, sessions: JSON.stringify([{ ...session, virtualLink: 'javascript:alert(1)' }]) })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, sessions: JSON.stringify([{ ...session, id: 'x' }]) })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, maximumCapacity: '0' })).ok).toBe(false);
+    expect(parseOfferingForm(form({ ...valid, currencyCode: 'EUR' })).ok).toBe(false);
   });
 });
