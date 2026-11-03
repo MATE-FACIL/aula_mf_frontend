@@ -5,7 +5,7 @@ import { useActionState, useState } from 'react';
 import { Tabs } from '@/components/ui/tabs';
 import { CopyButton } from '@/features/achievements/components/copy-button';
 import type { IssuedCredentials } from '@/types/admin';
-import { createGuardianAction, createStudentAction, type AdminActionState } from '../actions';
+import { createGuardianAction, createInstructorAction, createStudentAction, type AdminActionState } from '../actions';
 import { DOCUMENT_TYPES } from '../format';
 import { SubmitButton, useResultToast } from './action-form';
 import styles from './admin.module.css';
@@ -84,7 +84,7 @@ export interface GuardianOption {
   fullName: string;
 }
 
-export function CreatePersonForms({ guardian, defaultTab }: { guardian?: GuardianOption; defaultTab?: 'student' | 'guardian' }) {
+export function CreatePersonForms({ guardian, defaultTab }: { guardian?: GuardianOption; defaultTab?: 'student' | 'guardian' | 'instructor' }) {
   return (
     <Tabs
       label="Tipo de persona"
@@ -123,6 +123,22 @@ export function CreatePersonForms({ guardian, defaultTab }: { guardian?: Guardia
                 <>
                   <NameFields errors={errors} />
                   <Field label="Correo" name="email" type="email" required maxLength={254} autoComplete="off" error={errors?.email} hint="Es su usuario para entrar al panel de la familia." />
+                  <DocumentType />
+                  <Field label="Número de documento (opcional)" name="documentNumber" maxLength={20} autoComplete="off" error={errors?.documentNumber} />
+                </>
+              )}
+            </PersonForm>
+          ),
+        },
+        {
+          id: 'instructor',
+          label: 'Profesor',
+          panel: (
+            <PersonForm action={createInstructorAction} submitLabel="Crear profesor">
+              {(errors) => (
+                <>
+                  <NameFields errors={errors} />
+                  <Field label="Correo" name="email" type="email" required maxLength={254} autoComplete="off" error={errors?.email} hint="Con este correo entra al aula; queda listo para asignarlo a grupos." />
                   <DocumentType />
                   <Field label="Número de documento (opcional)" name="documentNumber" maxLength={20} autoComplete="off" error={errors?.documentNumber} />
                 </>

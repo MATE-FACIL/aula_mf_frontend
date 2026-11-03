@@ -11,6 +11,8 @@ import {
   parseCategoryName,
   parseCourseForm,
   parseGuardianForm,
+  parseLink,
+  parseOfferingForm,
   parseStudentForm,
   type FieldErrors,
 } from './validation';
@@ -214,5 +216,75 @@ export async function withdrawEnrollmentAction(_prev: AdminActionState, form: Fo
     await services.admin.withdrawEnrollment(ctx, enrollmentId);
     refresh();
     return { message: 'Matrícula retirada: el cupo quedó libre.' };
+  });
+}
+
+// ─── Grupos (ediciones) y profesores — SCRUM-41/42 ─────────────────────
+
+export async function saveOfferingAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  const state = await adminMutation(async (ctx) => {
+    const [courseId] = ids(form, 'courseId') ?? [];
+    if (!courseId) return BAD_REQUEST;
+    const parsed = parseOfferingForm(form);
+    if (!parsed.ok) return invalid(parsed.fieldErrors);
+    const offeringId = form.get('offeringId');
+    if (offeringId) {
+      if (!isUuid(offeringId)) return BAD_REQUEST;
+      await services.admin.updateOffering(ctx, courseId, offeringId, parsed.value);
+      refresh();
+      return { message: 'Grupo guardado.' };
+    }
+    const created = await services.admin.createOffering(ctx, courseId, parsed.value);
+    return { redirectTo: `/admin/cursos/${courseId}/grupos/${created.id}?creado=1` };
+  });
+  if (state.redirectTo) redirect(state.redirectTo);
+  return state;
+}
+
+export async function assignInstructorsAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const pair = ids(form, 'courseId', 'offeringId');
+    if (!pair) return BAD_REQUEST;
+    const instructorIds = [...new Set(form.getAll('instructorIds'))];
+    if (instructorIds.length === 0) return invalid({ instructorIds: 'Elige al menos un profesor.' });
+    if (!instructorIds.every(isUuid)) return BAD_REQUEST;
+    await services.admin.assignInstructors(ctx, pair[0], pair[1], instructorIds as string[]);
+    refresh();
+    return { message: 'Profesores asignados.' };
+  });
+}
+
+export async function publishOfferingAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const pair = ids(form, 'courseId', 'offeringId');
+    if (!pair) return BAD_REQUEST;
+    await services.admin.publishOffering(ctx, pair[0], pair[1]);
+    refresh();
+    return { message: 'Grupo publicado: ya se puede matricular.' };
+  });
+}
+
+export async function updateSessionLinkAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const triple = ids(form, 'courseId', 'offeringId', 'sessionId');
+    if (!triple) return BAD_REQUEST;
+    const link = parseLink(form.get('virtualLink'));
+    if (!link.ok) return invalid({ virtualLink: 'Usa un enlace que empiece con https://' });
+    await services.admin.updateSessionLink(ctx, triple[0], triple[1], triple[2], link.value);
+    refresh();
+    return { message: 'Enlace de la clase actualizado.' };
+  });
+}
+
+export async function createInstructorAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const parsed = parseGuardianForm(form);
+    if (!parsed.ok) return invalid(parsed.fieldErrors);
+    const created = await services.admin.createInstructor(ctx, parsed.value);
+    refresh();
+    return {
+      credentials: { userId: created.userId, loginIdentifier: created.loginIdentifier, initialPassword: created.initialPassword },
+      message: 'Profesor creado.',
+    };
   });
 }

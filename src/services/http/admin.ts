@@ -50,4 +50,23 @@ export const httpAdmin: AdminService = {
   activateEnrollment: ({ token }, enrollmentId, paymentNote) =>
     apiRequest(`/enrollments/${enc(enrollmentId)}/activate`, { method: 'POST', token, body: { paymentNote: paymentNote ?? null } }),
   withdrawEnrollment: ({ token }, enrollmentId) => apiRequest(`/enrollments/${enc(enrollmentId)}/withdraw`, { method: 'POST', token }),
+
+  listOfferings: ({ token }, courseId) => nullOn404(apiRequest(`/courses/${enc(courseId)}/offerings`, { token })),
+  getOffering: ({ token }, courseId, offeringId) =>
+    nullOn404(apiRequest(`/courses/${enc(courseId)}/offerings/${enc(offeringId)}`, { token })),
+  createOffering: ({ token }, courseId, input) =>
+    apiRequest(`/courses/${enc(courseId)}/offerings`, { method: 'POST', token, body: input }),
+  updateOffering: ({ token }, courseId, offeringId, input) =>
+    apiRequest(`/courses/${enc(courseId)}/offerings/${enc(offeringId)}`, { method: 'PUT', token, body: input }),
+  publishOffering: ({ token }, courseId, offeringId) =>
+    apiRequest(`/courses/${enc(courseId)}/offerings/${enc(offeringId)}/publish`, { method: 'POST', token }),
+  assignInstructors: ({ token }, courseId, offeringId, instructorIds) =>
+    apiRequest(`/courses/${enc(courseId)}/offerings/${enc(offeringId)}/instructors`, { method: 'PUT', token, body: { instructorIds } }),
+  updateSessionLink: ({ token }, courseId, offeringId, sessionId, virtualLink) =>
+    apiRequest(`/courses/${enc(courseId)}/offerings/${enc(offeringId)}/sessions/${enc(sessionId)}/virtual-link`, {
+      method: 'PATCH', token, body: { virtualLink },
+    }),
+
+  listInstructors: ({ token }) => apiRequest('/admin/instructors', { token }),
+  createInstructor: ({ token }, input) => apiRequest('/admin/instructors', { method: 'POST', token, body: input }),
 };

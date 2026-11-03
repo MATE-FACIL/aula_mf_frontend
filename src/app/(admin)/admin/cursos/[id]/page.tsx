@@ -2,14 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { PageSkeleton, SectionTitle } from '@/components/ui/primitives';
+import { PageSkeleton, SectionTitle, Skeleton } from '@/components/ui/primitives';
 import { setCoursePublishedAction } from '@/features/admin/actions';
 import { ActionForm, SubmitButton } from '@/features/admin/components/action-form';
 import styles from '@/features/admin/components/admin.module.css';
 import { CourseForm, CoverUploader } from '@/features/admin/components/course-form';
+import { OfferingList } from '@/features/admin/components/offerings';
 import { isUuid } from '@/features/admin/validation';
 import { cn } from '@/lib/cn';
-import { requireSession } from '@/server/auth/dal';
+import { requireSession, type Session } from '@/server/auth/dal';
 import { services } from '@/services';
 
 export const metadata: Metadata = { title: 'Editar curso' };
@@ -64,6 +65,24 @@ async function CourseEditor({ params, searchParams }: PageProps<'/admin/cursos/[
           <CoverUploader courseId={course.id} coverUrl={course.coverUrl} title={course.title} />
         </aside>
       </div>
+
+      <section className="card section">
+        <SectionTitle title="Grupos" action={<Link className="btn btn--sm btn--primary" href={`/admin/cursos/${course.id}/grupos/nuevo`}>+ Nuevo grupo</Link>} />
+        {/* Se carga aparte: el formulario del curso no espera a los grupos. */}
+        <Suspense fallback={<Skeleton height="8rem" />}>
+          <CourseOfferings ctx={ctx} courseId={course.id} />
+        </Suspense>
+      </section>
     </>
   );
+}
+
+async function CourseOfferings({ ctx, courseId }: { ctx: Session; courseId: string }) {
+  // Tres lecturas independientes en paralelo: grupos con horario, cupos ocupados y nombres de profesores.
+  const [offerings, seats, instructors] = await Promise.all([
+    services.admin.listOfferings(ctx, courseId),
+    services.admin.listOfferingSeats(ctx),
+    services.admin.listInstructors(ctx),
+  ]);
+  return <OfferingList courseId={courseId} offerings={offerings ?? []} seats={seats} instructors={instructors} />;
 }

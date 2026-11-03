@@ -9,10 +9,13 @@ import type {
   AdminUserListItem,
   BackendRole,
   CourseCategory,
+  CourseOffering,
   Enrollment,
   EnrollmentStatus,
+  Instructor,
   IssuedCredentials,
   OfferingSeats,
+  SaveOfferingInput,
 } from '@/types/admin';
 import type { AdminService, RequestContext } from '../contracts';
 
@@ -73,7 +76,7 @@ function createStore() {
   const course = (title: string, categoryId: string, isPublished: boolean, shortDescription: string): AdminCourse => ({
     id: randomUUID(), title, categoryId, isPublished, shortDescription,
     fullDescription: null, objectives: null, syllabus: null, targetAudience: null, prerequisites: null,
-    coverUrl: null, coverOriginalFileName: null,
+    coverUrl: null, coverOriginalFileName: null, sessionDurationMinutes: title.includes('Primaria') ? 60 : 90,
   });
 
   return {
@@ -149,11 +152,12 @@ function checkCategory(categoryId: string | null) {
 
 // ─── Matrículas: grupos (ediciones) con cupo y altas manuales ──────────
 
-interface MockOffering {
+type MockOffering = CourseOffering;
+
+interface MockInstructor {
   id: string;
-  courseId: string;
-  name: string;
-  maximumCapacity: number;
+  fullName: string;
+  email: string;
 }
 
 interface MockEnrollment {
@@ -172,10 +176,27 @@ interface MockEnrollment {
 
 function createEnrollmentStore() {
   const [mate, , lab] = store().courses;
+  const instructors: MockInstructor[] = [
+    { id: randomUUID(), fullName: 'Lucía Paredes', email: 'lucia@matefacil.pe' },
+    { id: randomUUID(), fullName: 'Diego Salas', email: 'diego@matefacil.pe' },
+  ];
+  // Sesiones semanales a partir del próximo lunes, a las 22:00 UTC (5 p. m. en Lima).
+  const monday = new Date();
+  monday.setUTCDate(monday.getUTCDate() + ((8 - monday.getUTCDay()) % 7 || 7));
+  monday.setUTCHours(22, 0, 0, 0);
+  const weekly = (count: number, minutes: number) =>
+    Array.from({ length: count }, (_, i) => {
+      const startsAt = new Date(monday.getTime() + i * 7 * 86_400_000);
+      return { id: randomUUID(), startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + minutes * 60_000).toISOString(), virtualLink: 'https://meet.example.com/mf-mate' };
+    });
+  const offering = (courseId: string, name: string, maximumCapacity: number, status: 'draft' | 'published', instructorIds: string[], sessions: CourseOffering['sessions']): MockOffering => ({
+    id: randomUUID(), courseId, name, status, maximumCapacity, basePrice: 180, currencyCode: 'PEN',
+    plannedSessionCount: sessions.length, instructorIds, sessions,
+  });
   const offerings: MockOffering[] = [
-    { id: randomUUID(), courseId: mate.id, name: 'Grupo A · Lun y Mié 5 p. m.', maximumCapacity: 8 },
-    { id: randomUUID(), courseId: mate.id, name: 'Grupo B · Sáb 10 a. m.', maximumCapacity: 2 },
-    { id: randomUUID(), courseId: lab.id, name: 'Grupo único · Vie 4 p. m.', maximumCapacity: 12 },
+    offering(mate.id, 'Grupo A · Lun y Mié 5 p. m.', 8, 'published', [instructors[0].id], weekly(4, 90)),
+    offering(mate.id, 'Grupo B · Sáb 10 a. m.', 2, 'published', [instructors[0].id], weekly(4, 90)),
+    offering(lab.id, 'Grupo único · Vie 4 p. m.', 12, 'draft', [], weekly(2, 90)),
   ];
   const people = store().people;
   const adminId = people.find((p) => p.roles.includes('administrator'))?.id ?? 'adm-equipo';
@@ -189,6 +210,7 @@ function createEnrollmentStore() {
   });
   return {
     offerings,
+    instructors,
     enrollments: [
       enrollment('Valentina', offerings[0], 'active', 'Yape · op. 482913'),
       enrollment('Lucía', offerings[0], 'pending', null),
@@ -233,6 +255,23 @@ function checkNote(note: string | undefined) {
     throw new ApiError('validation', 'Nota larga', 400, undefined, 'La nota de pago es demasiado larga (máximo 300 caracteres).');
   }
 }
+
+function findOffering(courseId: string, offeringId: string): MockOffering {
+  const o = enrollmentStore().offerings.find((x) => x.id === offeringId && x.courseId === courseId);
+  if (!o) throw new ApiError('not_found', `Grupo ${offeringId}`, 404, undefined, 'No encontramos ese grupo.');
+  return o;
+}
+
+function checkOffering(input: SaveOfferingInput) {
+  if (!input.name.trim()) throw new ApiError('validation', 'Nombre', 400, undefined, 'El grupo necesita un nombre.');
+  if (input.maximumCapacity < 1) throw new ApiError('validation', 'Cupo', 400, undefined, 'El cupo debe ser mayor que cero.');
+  if (input.sessions.length !== input.plannedSessionCount) {
+    throw new ApiError('validation', 'Sesiones', 400, undefined, 'Sessions must match the planned count and have distinct identifiers.');
+  }
+}
+
+const toSessions = (input: SaveOfferingInput) =>
+  input.sessions.map((s) => ({ id: s.id ?? randomUUID(), startsAt: s.startsAt, endsAt: s.endsAt, virtualLink: s.virtualLink }));
 
 export const mockAdmin: AdminService = {
   async getSummary(ctx) {
@@ -478,5 +517,87 @@ export const mockAdmin: AdminService = {
     if (e.status === 'withdrawn') throw new ApiError('validation', 'Estado', 400, undefined, 'La matrícula ya estaba retirada.');
     Object.assign(e, { status: 'withdrawn', withdrawnAt: new Date().toISOString(), withdrawnBy: ctx.user.id });
     return toEnrollment(e);
+  },
+
+  async listOfferings(ctx, courseId) {
+    requireAdmin(ctx);
+    await delay();
+    if (!store().courses.some((c) => c.id === courseId)) return null;
+    return enrollmentStore().offerings.filter((o) => o.courseId === courseId);
+  },
+
+  async getOffering(ctx, courseId, offeringId) {
+    requireAdmin(ctx);
+    await delay();
+    return enrollmentStore().offerings.find((o) => o.id === offeringId && o.courseId === courseId) ?? null;
+  },
+
+  async createOffering(ctx, courseId, input) {
+    requireAdmin(ctx);
+    await delay();
+    if (!store().courses.some((c) => c.id === courseId)) throw new ApiError('not_found', 'Curso', 404);
+    checkOffering(input);
+    const o: MockOffering = { id: randomUUID(), courseId, status: 'draft', instructorIds: [], ...input, name: input.name.trim(), sessions: toSessions(input) };
+    enrollmentStore().offerings.push(o);
+    return o;
+  },
+
+  async updateOffering(ctx, courseId, offeringId, input) {
+    requireAdmin(ctx);
+    await delay();
+    const o = findOffering(courseId, offeringId);
+    if (o.status !== 'draft') throw new ApiError('conflict', 'Publicado', 409, undefined, 'Only draft editions can be changed.');
+    checkOffering(input);
+    return Object.assign(o, { ...input, name: input.name.trim(), sessions: toSessions(input) });
+  },
+
+  async publishOffering(ctx, courseId, offeringId) {
+    requireAdmin(ctx);
+    await delay();
+    const o = findOffering(courseId, offeringId);
+    if (o.instructorIds.length === 0) throw new ApiError('conflict', 'Sin profesor', 409, undefined, 'Edition requires at least one Instructor before publication.');
+    if (o.sessions.length !== o.plannedSessionCount) throw new ApiError('conflict', 'Calendario', 409, undefined, 'Edition requires its complete session calendar before publication.');
+    o.status = 'published';
+    return o;
+  },
+
+  async assignInstructors(ctx, courseId, offeringId, instructorIds) {
+    requireAdmin(ctx);
+    await delay();
+    const o = findOffering(courseId, offeringId);
+    if (o.status !== 'draft') throw new ApiError('conflict', 'Publicado', 409, undefined, 'Only draft editions can be changed.');
+    if (instructorIds.length === 0) throw new ApiError('validation', 'Profesores', 400, undefined, 'Edition requires distinct Instructor identifiers.');
+    o.instructorIds = [...new Set(instructorIds)];
+    return o;
+  },
+
+  async updateSessionLink(ctx, courseId, offeringId, sessionId, virtualLink) {
+    requireAdmin(ctx);
+    await delay();
+    const o = findOffering(courseId, offeringId);
+    const session = o.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new ApiError('validation', 'Sesión', 400, undefined, 'Session does not belong to this edition.');
+    session.virtualLink = virtualLink;
+    return o;
+  },
+
+  async listInstructors(ctx) {
+    requireAdmin(ctx);
+    await delay();
+    return enrollmentStore().instructors
+      .map((i): Instructor => ({ id: i.id, userId: null, fullName: i.fullName, email: i.email }))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'));
+  },
+
+  async createInstructor(ctx, input) {
+    requireAdmin(ctx);
+    await delay();
+    const email = input.email.trim();
+    if (enrollmentStore().instructors.some((i) => i.email.toLowerCase() === email.toLowerCase())) {
+      throw new ApiError('conflict', 'Duplicado', 409, undefined, 'Ya existe una cuenta con ese correo.');
+    }
+    const instructor = { id: randomUUID(), fullName: [input.givenNames, input.firstSurname, input.secondSurname].filter(Boolean).join(' '), email };
+    enrollmentStore().instructors.push(instructor);
+    return { instructorId: instructor.id, userId: randomUUID(), loginIdentifier: email, initialPassword: newPassword() };
   },
 };
