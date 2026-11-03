@@ -171,3 +171,48 @@ export async function deleteCategoryAction(_prev: AdminActionState, form: FormDa
     return { message: 'Categoría eliminada.' };
   });
 }
+
+// ─── Matrículas (activación manual) ────────────────────────────────────
+
+const MAX_PAYMENT_NOTE = 300;
+
+function paymentNote(form: FormData): string | undefined | null {
+  const value = form.get('paymentNote');
+  const note = typeof value === 'string' ? value.trim() : '';
+  if (note.length > MAX_PAYMENT_NOTE) return null;
+  return note || undefined;
+}
+
+export async function enrollAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const pair = ids(form, 'studentUserId', 'courseOfferingId');
+    if (!pair) return invalid({ courseOfferingId: 'Elige un grupo.' });
+    const note = paymentNote(form);
+    if (note === null) return invalid({ paymentNote: 'Máximo 300 caracteres.' });
+    await services.admin.enroll(ctx, { studentUserId: pair[0], courseOfferingId: pair[1], paymentNote: note });
+    refresh();
+    return { message: 'Matrícula registrada como pendiente de pago.' };
+  });
+}
+
+export async function activateEnrollmentAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const [enrollmentId] = ids(form, 'enrollmentId') ?? [];
+    if (!enrollmentId) return BAD_REQUEST;
+    const note = paymentNote(form);
+    if (note === null) return invalid({ paymentNote: 'Máximo 300 caracteres.' });
+    await services.admin.activateEnrollment(ctx, enrollmentId, note);
+    refresh();
+    return { message: 'Matrícula activada.' };
+  });
+}
+
+export async function withdrawEnrollmentAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const [enrollmentId] = ids(form, 'enrollmentId') ?? [];
+    if (!enrollmentId) return BAD_REQUEST;
+    await services.admin.withdrawEnrollment(ctx, enrollmentId);
+    refresh();
+    return { message: 'Matrícula retirada: el cupo quedó libre.' };
+  });
+}

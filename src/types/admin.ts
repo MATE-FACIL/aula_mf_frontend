@@ -128,3 +128,46 @@ export interface SaveCourseInput {
   targetAudience: string | null;
   prerequisites: string | null;
 }
+
+// ─── Matrículas (SCRUM-44) ─────────────────────────────────────────────
+
+export const ENROLLMENT_STATUSES = ['pending', 'active', 'withdrawn'] as const;
+export type EnrollmentStatus = (typeof ENROLLMENT_STATUSES)[number];
+
+export interface Enrollment {
+  id: string;
+  studentUserId: string;
+  studentName: string;
+  studentDocument: string | null;
+  courseOfferingId: string;
+  courseTitle: string;
+  offeringName: string;
+  status: EnrollmentStatus;
+  paymentNote: string | null;
+  createdAt: string;
+  createdByName: string | null;
+  activatedAt: string | null;
+  activatedByName: string | null;
+  withdrawnAt: string | null;
+  withdrawnByName: string | null;
+}
+
+/** Edición (grupo) con su cupo: los pendientes y activos ocupan lugar. */
+export interface OfferingSeats {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  name: string;
+  isPublished: boolean;
+  maximumCapacity: number;
+  takenSeats: number;
+  freeSeats: number;
+}
+
+export interface EnrollmentFilters {
+  courseOfferingId?: string;
+  studentUserId?: string;
+  status?: EnrollmentStatus;
+  page?: number;
+  pageSize?: number;
+}

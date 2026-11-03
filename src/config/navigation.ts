@@ -24,6 +24,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Resumen', icon: 'dashboard', exact: true },
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },
   { href: '/admin/familias', label: 'Familias', icon: 'family' },
+  { href: '/admin/matriculas', label: 'Matrículas', short: 'Matríc.', icon: 'enrollments' },
   { href: '/admin/cursos', label: 'Cursos', icon: 'courses' },
   { href: '/admin/categorias', label: 'Categorías', short: 'Categ.', icon: 'categories' },
 ];

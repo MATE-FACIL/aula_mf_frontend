@@ -9,7 +9,10 @@ import type {
   AdminUserListItem,
   BackendRole,
   CourseCategory,
+  Enrollment,
+  EnrollmentStatus,
   IssuedCredentials,
+  OfferingSeats,
 } from '@/types/admin';
 import type { AdminService, RequestContext } from '../contracts';
 
@@ -141,6 +144,93 @@ function findCourse(id: string): AdminCourse {
 function checkCategory(categoryId: string | null) {
   if (categoryId && !store().categories.some((c) => c.id === categoryId)) {
     throw new ApiError('validation', 'Categoría inexistente', 400, undefined, 'La categoría elegida no existe.');
+  }
+}
+
+// ─── Matrículas: grupos (ediciones) con cupo y altas manuales ──────────
+
+interface MockOffering {
+  id: string;
+  courseId: string;
+  name: string;
+  maximumCapacity: number;
+}
+
+interface MockEnrollment {
+  id: string;
+  studentUserId: string;
+  courseOfferingId: string;
+  status: EnrollmentStatus;
+  paymentNote: string | null;
+  createdAt: string;
+  createdBy: string;
+  activatedAt: string | null;
+  activatedBy: string | null;
+  withdrawnAt: string | null;
+  withdrawnBy: string | null;
+}
+
+function createEnrollmentStore() {
+  const [mate, , lab] = store().courses;
+  const offerings: MockOffering[] = [
+    { id: randomUUID(), courseId: mate.id, name: 'Grupo A · Lun y Mié 5 p. m.', maximumCapacity: 8 },
+    { id: randomUUID(), courseId: mate.id, name: 'Grupo B · Sáb 10 a. m.', maximumCapacity: 2 },
+    { id: randomUUID(), courseId: lab.id, name: 'Grupo único · Vie 4 p. m.', maximumCapacity: 12 },
+  ];
+  const people = store().people;
+  const adminId = people.find((p) => p.roles.includes('administrator'))?.id ?? 'adm-equipo';
+  const studentId = (name: string) => people.find((p) => p.givenNames === name)?.id ?? randomUUID();
+  const now = new Date().toISOString();
+  const enrollment = (who: string, offering: MockOffering, status: EnrollmentStatus, paymentNote: string | null): MockEnrollment => ({
+    id: randomUUID(), studentUserId: studentId(who), courseOfferingId: offering.id, status, paymentNote,
+    createdAt: now, createdBy: adminId,
+    activatedAt: status === 'active' ? now : null, activatedBy: status === 'active' ? adminId : null,
+    withdrawnAt: null, withdrawnBy: null,
+  });
+  return {
+    offerings,
+    enrollments: [
+      enrollment('Valentina', offerings[0], 'active', 'Yape · op. 482913'),
+      enrollment('Lucía', offerings[0], 'pending', null),
+      enrollment('Mateo', offerings[1], 'pending', 'Transferencia por confirmar'),
+    ],
+  };
+}
+
+const globalForEnrollments = globalThis as unknown as { __mfMockEnrollments?: ReturnType<typeof createEnrollmentStore> };
+const enrollmentStore = () => (globalForEnrollments.__mfMockEnrollments ??= createEnrollmentStore());
+
+const takenSeats = (offeringId: string) =>
+  enrollmentStore().enrollments.filter((e) => e.courseOfferingId === offeringId && e.status !== 'withdrawn').length;
+
+function toEnrollment(e: MockEnrollment): Enrollment {
+  const people = store().people;
+  const nameOf = (id: string | null) => {
+    const person = id ? people.find((p) => p.id === id) : undefined;
+    return person ? fullName(person) : null;
+  };
+  const offering = enrollmentStore().offerings.find((o) => o.id === e.courseOfferingId);
+  const student = people.find((p) => p.id === e.studentUserId);
+  return {
+    id: e.id, studentUserId: e.studentUserId, studentName: student ? fullName(student) : '(persona eliminada)',
+    studentDocument: student?.documentNumber ?? null, courseOfferingId: e.courseOfferingId,
+    courseTitle: store().courses.find((c) => c.id === offering?.courseId)?.title ?? '(curso eliminado)',
+    offeringName: offering?.name ?? '(edición eliminada)', status: e.status, paymentNote: e.paymentNote,
+    createdAt: e.createdAt, createdByName: nameOf(e.createdBy), activatedAt: e.activatedAt, activatedByName: nameOf(e.activatedBy),
+    withdrawnAt: e.withdrawnAt, withdrawnByName: nameOf(e.withdrawnBy),
+  };
+}
+
+function findEnrollment(id: string): MockEnrollment {
+  const e = enrollmentStore().enrollments.find((x) => x.id === id);
+  if (!e) throw new ApiError('not_found', `Matrícula ${id}`, 404, undefined, 'No encontramos esa matrícula.');
+  return e;
+}
+
+const MAX_PAYMENT_NOTE = 300;
+function checkNote(note: string | undefined) {
+  if (note && note.trim().length > MAX_PAYMENT_NOTE) {
+    throw new ApiError('validation', 'Nota larga', 400, undefined, 'La nota de pago es demasiado larga (máximo 300 caracteres).');
   }
 }
 
@@ -320,5 +410,73 @@ export const mockAdmin: AdminService = {
       throw new ApiError('conflict', 'Categoría en uso', 409, undefined, 'La categoría está asignada a un curso.');
     }
     s.categories = s.categories.filter((c) => c.id !== categoryId);
+  },
+
+  async listEnrollments(ctx, { courseOfferingId, studentUserId, status, page = 1, pageSize = 20 }) {
+    requireAdmin(ctx);
+    await delay();
+    const size = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+    const current = Math.max(1, page);
+    const matches = enrollmentStore().enrollments
+      .filter((e) => (!courseOfferingId || e.courseOfferingId === courseOfferingId) && (!studentUserId || e.studentUserId === studentUserId) && (!status || e.status === status))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { items: matches.slice((current - 1) * size, current * size).map(toEnrollment), page: current, pageSize: size, total: matches.length };
+  },
+
+  async listOfferingSeats(ctx) {
+    requireAdmin(ctx);
+    await delay();
+    return enrollmentStore().offerings.map((o): OfferingSeats => {
+      const course = store().courses.find((c) => c.id === o.courseId);
+      const taken = takenSeats(o.id);
+      return {
+        id: o.id, courseId: o.courseId, courseTitle: course?.title ?? '', name: o.name, isPublished: course?.isPublished ?? false,
+        maximumCapacity: o.maximumCapacity, takenSeats: taken, freeSeats: Math.max(0, o.maximumCapacity - taken),
+      };
+    });
+  },
+
+  async enroll(ctx, { studentUserId, courseOfferingId, paymentNote }) {
+    requireAdmin(ctx);
+    await delay();
+    checkNote(paymentNote);
+    if (!findPerson(studentUserId).roles.includes('student')) {
+      throw new ApiError('validation', 'No es alumno', 400, undefined, 'Solo se puede matricular a personas con rol de alumno.');
+    }
+    const offering = enrollmentStore().offerings.find((o) => o.id === courseOfferingId);
+    if (!offering) throw new ApiError('not_found', 'Edición', 404, undefined, 'No encontramos esa edición del curso.');
+    const live = enrollmentStore().enrollments.filter((e) => e.courseOfferingId === offering.id && e.status !== 'withdrawn');
+    if (live.some((e) => e.studentUserId === studentUserId)) {
+      throw new ApiError('conflict', 'Duplicada', 409, undefined, 'El alumno ya está matriculado en esta edición.');
+    }
+    if (live.length >= offering.maximumCapacity) {
+      const cap = offering.maximumCapacity;
+      throw new ApiError('conflict', 'Lleno', 409, undefined, `El grupo está lleno (${cap} de ${cap} cupos).`);
+    }
+    const e: MockEnrollment = {
+      id: randomUUID(), studentUserId, courseOfferingId, status: 'pending', paymentNote: paymentNote?.trim() || null,
+      createdAt: new Date().toISOString(), createdBy: ctx.user.id, activatedAt: null, activatedBy: null, withdrawnAt: null, withdrawnBy: null,
+    };
+    enrollmentStore().enrollments.push(e);
+    return toEnrollment(e);
+  },
+
+  async activateEnrollment(ctx, enrollmentId, paymentNote) {
+    requireAdmin(ctx);
+    await delay();
+    checkNote(paymentNote);
+    const e = findEnrollment(enrollmentId);
+    if (e.status !== 'pending') throw new ApiError('validation', 'Estado', 400, undefined, 'Solo se puede activar una matrícula pendiente.');
+    Object.assign(e, { status: 'active', activatedAt: new Date().toISOString(), activatedBy: ctx.user.id, paymentNote: paymentNote?.trim() || e.paymentNote });
+    return toEnrollment(e);
+  },
+
+  async withdrawEnrollment(ctx, enrollmentId) {
+    requireAdmin(ctx);
+    await delay();
+    const e = findEnrollment(enrollmentId);
+    if (e.status === 'withdrawn') throw new ApiError('validation', 'Estado', 400, undefined, 'La matrícula ya estaba retirada.');
+    Object.assign(e, { status: 'withdrawn', withdrawnAt: new Date().toISOString(), withdrawnBy: ctx.user.id });
+    return toEnrollment(e);
   },
 };
