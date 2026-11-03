@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 // Iconos de la navegación: SVG en línea (sin dependencias ni peticiones), heredan el color del texto.
 
-export type NavIconName = 'home' | 'route' | 'lessons' | 'exams' | 'classes' | 'trophy' | 'dashboard' | 'users' | 'family' | 'courses' | 'categories';
+export type NavIconName = 'home' | 'route' | 'lessons' | 'exams' | 'classes' | 'trophy' | 'dashboard' | 'users' | 'family' | 'courses' | 'categories' | 'enrollments';
 
 const PATHS: Record<NavIconName, ReactNode> = {
   // Casa
@@ -70,6 +70,14 @@ const PATHS: Record<NavIconName, ReactNode> = {
       <path d="M3 21v-4.5a5 5 0 0 1 10 0V21" />
       <circle cx="17.5" cy="11" r="2.3" />
       <path d="M14 21v-2.5a3.5 3.5 0 0 1 7 0V21" />
+    </>
+  ),
+  // Portapapeles con check (matrícula confirmada)
+  enrollments: (
+    <>
+      <rect x="5" y="4.5" width="14" height="16.5" rx="2" />
+      <path d="M9 4.5V3h6v1.5" />
+      <path d="m9 13 2.2 2.2L15.5 11" />
     </>
   ),
   // Libro abierto

@@ -1,4 +1,12 @@
-import { BACKEND_ROLES, type AccountStatus, type BackendRole, type UserListFilters } from '@/types/admin';
+import {
+  BACKEND_ROLES,
+  ENROLLMENT_STATUSES,
+  type AccountStatus,
+  type BackendRole,
+  type EnrollmentFilters,
+  type EnrollmentStatus,
+  type UserListFilters,
+} from '@/types/admin';
 
 // Etiquetas y lectura de filtros del panel. Sin dependencias de servidor: se prueba con Vitest.
 
@@ -52,4 +60,37 @@ export function usersHref(basePath: string, filters: UserListFilters, page = fil
 
 export function pageCount(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize));
+}
+
+// ─── Matrículas ────────────────────────────────────────────────────────
+
+export const ENROLLMENT_STATUS_LABEL: Record<EnrollmentStatus, string> = {
+  pending: 'Pendiente de pago',
+  active: 'Activa',
+  withdrawn: 'Retirada',
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Filtros de la lista de matrículas desde la URL (`?estado=&grupo=&pagina=`). */
+export function parseEnrollmentFilters(params: SearchParams): EnrollmentFilters {
+  const rawStatus = first(params.estado);
+  const status = ENROLLMENT_STATUSES.includes(rawStatus as EnrollmentStatus) ? (rawStatus as EnrollmentStatus) : undefined;
+  const group = first(params.grupo);
+  const page = Number.parseInt(first(params.pagina) ?? '', 10);
+  return {
+    status,
+    courseOfferingId: group && UUID_RE.test(group) ? group : undefined,
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+    pageSize: PAGE_SIZE,
+  };
+}
+
+export function enrollmentsHref(filters: EnrollmentFilters, page = filters.page ?? 1): string {
+  const params = new URLSearchParams();
+  if (filters.status) params.set('estado', filters.status);
+  if (filters.courseOfferingId) params.set('grupo', filters.courseOfferingId);
+  if (page > 1) params.set('pagina', String(page));
+  const text = params.toString();
+  return text ? `/admin/matriculas?${text}` : '/admin/matriculas';
 }

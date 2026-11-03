@@ -37,9 +37,12 @@ import type {
   AdminUserDetail,
   AdminUserListItem,
   CourseCategory,
+  Enrollment,
+  EnrollmentFilters,
   IssuedCredentials,
   NewGuardianInput,
   NewStudentInput,
+  OfferingSeats,
   Page,
   SaveCourseInput,
   UserListFilters,
@@ -162,6 +165,13 @@ export interface AdminService {
   createCategory(ctx: RequestContext, name: string): Promise<CourseCategory>;
   renameCategory(ctx: RequestContext, categoryId: string, name: string): Promise<CourseCategory>;
   deleteCategory(ctx: RequestContext, categoryId: string): Promise<void>;
+
+  /** Matrícula con activación manual: pendiente → activa (pago confirmado) o retirada. */
+  listEnrollments(ctx: RequestContext, filters: EnrollmentFilters): Promise<Page<Enrollment>>;
+  listOfferingSeats(ctx: RequestContext): Promise<OfferingSeats[]>;
+  enroll(ctx: RequestContext, input: { studentUserId: string; courseOfferingId: string; paymentNote?: string }): Promise<Enrollment>;
+  activateEnrollment(ctx: RequestContext, enrollmentId: string, paymentNote?: string): Promise<Enrollment>;
+  withdrawEnrollment(ctx: RequestContext, enrollmentId: string): Promise<Enrollment>;
 }
 
 export interface Services {

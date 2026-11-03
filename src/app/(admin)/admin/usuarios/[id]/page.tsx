@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { EmptyState, PageSkeleton, SectionTitle } from '@/components/ui/primitives';
+import { EmptyState, PageSkeleton, SectionTitle, Skeleton } from '@/components/ui/primitives';
 import { linkStudentAction, setUserActiveAction, unlinkStudentAction } from '@/features/admin/actions';
 import { ActionForm, SubmitButton } from '@/features/admin/components/action-form';
 import styles from '@/features/admin/components/admin.module.css';
+import { EnrollForm, EnrollmentsTable } from '@/features/admin/components/enrollments';
 import { RoleBadges, StatusBadge } from '@/features/admin/components/users-table';
 import { isUuid } from '@/features/admin/validation';
 import { formatShortDate } from '@/lib/time';
@@ -68,6 +69,16 @@ async function UserDetail({ params, searchParams }: PageProps<'/admin/usuarios/[
           </section>
         )}
       </div>
+
+      {isStudent && (
+        <section className="card section">
+          <SectionTitle title="Matrículas" />
+          {/* Se carga aparte: la ficha no espera a la matrícula para mostrarse. */}
+          <Suspense fallback={<Skeleton height="8rem" />}>
+            <StudentEnrollments ctx={ctx} studentId={user.id} />
+          </Suspense>
+        </section>
+      )}
 
       {isGuardian && (
         <section className="card section">
@@ -154,5 +165,21 @@ async function LinkExistingStudent({ ctx, guardian, search }: { ctx: Session; gu
         </ul>
       )}
     </div>
+  );
+}
+
+const STUDENT_ENROLLMENTS = 50;
+
+async function StudentEnrollments({ ctx, studentId }: { ctx: Session; studentId: string }) {
+  const [page, offerings] = await Promise.all([
+    services.admin.listEnrollments(ctx, { studentUserId: studentId, page: 1, pageSize: STUDENT_ENROLLMENTS }),
+    services.admin.listOfferingSeats(ctx),
+  ]);
+  const live = new Set(page.items.filter((e) => e.status !== 'withdrawn').map((e) => e.courseOfferingId));
+  return (
+    <>
+      <EnrollForm studentUserId={studentId} offerings={offerings} enrolledOfferingIds={live} />
+      <EnrollmentsTable enrollments={page.items} timeZone={ctx.user.timeZone} showStudent={false} empty="Todavía no tiene matrículas." />
+    </>
   );
 }

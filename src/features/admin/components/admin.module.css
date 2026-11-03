@@ -66,3 +66,8 @@ textarea.textarea { min-height: 6rem; resize: vertical; font: inherit; }
   .fields { grid-template-columns: minmax(0, 1fr); }
   .hideSm { display: none; }
 }
+
+/* ── Matrículas: tarjetas de cupo por grupo ─────────────────────────── */
+.seatCard { display: grid; gap: .3rem; text-decoration: none; color: inherit; }
+.seatCard:hover, .seatCard[aria-current='true'] { box-shadow: var(--sombra-sm); border-color: var(--acento); }
+.seatCard .badge { justify-self: start; }
