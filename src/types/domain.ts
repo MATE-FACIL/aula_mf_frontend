@@ -209,7 +209,8 @@ export interface LiveClass {
   topic: string;
   teacher: string;
   track: 'math' | 'lab';
-  joinUrl: string;
+  /** null mientras el profesor no publica el enlace de Zoom/Meet de esa clase. */
+  joinUrl: string | null;
 }
 
 export interface CalendarEvent {

@@ -2,13 +2,16 @@ import 'server-only';
 import type { RequestContext, Services } from './contracts';
 import { httpAdmin } from './http/admin';
 import { backendAuth } from './http/auth';
+import { fetchLiveSchedule } from './http/classes';
+import { upcoming } from './http/live-schedule';
 import { demoUserFor, mockServices } from './mock';
 
 // Modo HÍBRIDO para probar el aula contra el backend .NET real:
 //  - Autenticación (login, sesión, logout) y panel de administración → API real
 //    (API_BASE_URL, ej.: http://localhost:5087/api/v1).
-//  - Lo que el alumno y la familia ven (lecciones, tareas, tutor…) → datos mock, porque el backend
-//    aún no tiene esos módulos.
+//  - Clases en vivo y calendario del alumno → API real (SCRUM-50/51/52).
+//  - El resto de lo que ven el alumno y la familia (lecciones, tareas, tutor…) → datos mock, porque el
+//    backend aún no tiene esos módulos.
 //
 // El rol de la sesión lo decide el backend (`/auth/me` → roles), no el formulario de ingreso.
 
@@ -22,14 +25,30 @@ function withDemoUser<T extends object>(service: T): T {
   return wrapped as T;
 }
 
+const demoStudents = withDemoUser(mockServices.students);
+const demoSchedule = withDemoUser(mockServices.schedule);
+
 export const hybridServices: Services = {
   auth: backendAuth,
   admin: httpAdmin,
-  students: withDemoUser(mockServices.students),
+  students: {
+    ...demoStudents,
+    // Mock y clases reales en paralelo: una sola espera.
+    async getDashboard(ctx) {
+      const [dashboard, live] = await Promise.all([demoStudents.getDashboard(ctx), fetchLiveSchedule(ctx)]);
+      return { ...dashboard, classes: upcoming(live.classes, Date.now()) };
+    },
+  },
   notifications: withDemoUser(mockServices.notifications),
   lessons: withDemoUser(mockServices.lessons),
   tutor: withDemoUser(mockServices.tutor),
   assessments: withDemoUser(mockServices.assessments),
-  schedule: withDemoUser(mockServices.schedule),
+  schedule: {
+    ...demoSchedule,
+    async getSchedule(ctx) {
+      const [demo, live] = await Promise.all([demoSchedule.getSchedule(ctx), fetchLiveSchedule(ctx)]);
+      return { ...demo, ...live };
+    },
+  },
   family: withDemoUser(mockServices.family),
 };

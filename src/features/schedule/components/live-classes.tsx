@@ -21,7 +21,7 @@ export interface LiveClassView {
   course: string;
   topic: string;
   teacher: string;
-  joinUrl: string;
+  joinUrl: string | null;
 }
 
 type Phase = 'later' | 'soon' | 'open' | 'live' | 'ended';
@@ -56,10 +56,12 @@ export function LiveClasses({ classes, serverNow }: { classes: LiveClassView[]; 
               <h3>{c.course}</h3>
               <p>{c.topic} · {c.teacher}</p>
             </div>
-            {canJoin ? (
+            {canJoin && c.joinUrl ? (
               <a className={styles.join} href={c.joinUrl} target="_blank" rel="noopener noreferrer">
                 {phase === 'live' ? 'Entrar a la clase' : `Entrar · empieza en ${minutesUntil(c.startsAtMs, now)} min`}
               </a>
+            ) : canJoin ? (
+              <span className={styles.soon}>El enlace de esta clase aún no está listo. Avísale a tu profesor.</span>
             ) : (
               <span className={styles.soon}>
                 {phase === 'ended' ? 'Terminó · la grabación estará en Lecciones' : phase === 'soon' ? `Empieza en ${minutesUntil(c.startsAtMs, now)} min · se habilita ${JOIN_WINDOW_MIN} min antes` : `Se habilita ${JOIN_WINDOW_MIN} min antes`}
