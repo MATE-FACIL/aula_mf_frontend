@@ -5,7 +5,7 @@
 .avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--mate), var(--ruta-future)); color: #fff; font-size: 1.2rem; flex: none; }
 
 .rules { border-bottom: 1px solid color-mix(in srgb, var(--tx) 12%, transparent); padding: .5rem 1rem; font-size: .82rem; }
-.rules summary { cursor: pointer; font-weight: 800; color: var(--acento); }
+.rules summary { cursor: pointer; font-weight: 800; color: var(--acento-tx); }
 .rules ul { margin: .4rem 0 .2rem; padding-left: 1.1rem; display: grid; gap: .2rem; color: var(--tx2); }
 
 .chat { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .6rem; overscroll-behavior: contain; }

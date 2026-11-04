@@ -43,12 +43,12 @@ async function CourseList() {
         <tbody>
           {sorted.map((course) => (
             <tr key={course.id}>
-              <td>
+              <td data-label="">
                 <Link href={`/admin/cursos/${course.id}`}>{course.title}</Link>
                 {course.shortDescription && <span className={styles.sub}>{course.shortDescription}</span>}
               </td>
-              <td>{(course.categoryId && categoryName.get(course.categoryId)) ?? '—'}</td>
-              <td>
+              <td data-label="Categoría">{(course.categoryId && categoryName.get(course.categoryId)) ?? '—'}</td>
+              <td data-label="Estado">
                 <span className={cn(styles.badge, course.isPublished ? styles.status_active : styles.status_no_account)}>
                   {course.isPublished ? 'Publicado' : 'Borrador'}
                 </span>

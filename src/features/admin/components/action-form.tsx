@@ -19,13 +19,18 @@ export function SubmitButton({ children, pendingLabel, className }: { children: 
   );
 }
 
+type Notify = ReturnType<typeof useToast>['notify'];
+
+function reportResult(state: AdminActionState, notify: Notify) {
+  if (state.message) notify(state.message, 'success');
+  else if (state.error && !state.fieldErrors) notify(state.error, 'error');
+}
+
 /** Avisa con un toast el resultado de cada envío (éxito o error general). */
 export function useResultToast(state: AdminActionState) {
   const { notify } = useToast();
   useEffect(() => {
-    if (!state.at) return;
-    if (state.message) notify(state.message, 'success');
-    else if (state.error && !state.fieldErrors) notify(state.error, 'error');
+    if (state.at) reportResult(state, notify);
   }, [state, notify]);
 }
 
@@ -41,12 +46,17 @@ interface Props {
 
 /**
  * Formulario pequeño para una acción del panel (activar, vincular, publicar, borrar…).
- * Sigue funcionando sin JavaScript (Server Action en `action`); con JavaScript suma confirmación y avisos.
+ * El aviso sale al terminar la acción y no en un efecto: muchas acciones hacen desaparecer su propio formulario
+ * (publicar, activar, retirar, quitar un vínculo) y un efecto ya no llegaría a correr.
  */
 export function ActionForm({ action, children, className, confirmMessage, resetOnSuccess }: Props) {
-  const [state, formAction] = useActionState(action, {});
+  const { notify } = useToast();
+  const [state, formAction] = useActionState(async (prev: AdminActionState, form: FormData) => {
+    const result = await action(prev, form);
+    reportResult(result, notify);
+    return result;
+  }, {});
   const formRef = useRef<HTMLFormElement>(null);
-  useResultToast(state);
 
   useEffect(() => {
     if (resetOnSuccess && state.at && !state.error) formRef.current?.reset();

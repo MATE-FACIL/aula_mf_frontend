@@ -5,6 +5,7 @@ import { EvaluationList } from '@/features/assessments/components/evaluation-lis
 import { MathLevels } from '@/features/learning/components/learning';
 import { AttendanceList } from '@/features/schedule/components/schedule';
 import type { ChildOverview, Membership } from '@/types/domain';
+import { ChildClasses } from './child-classes';
 import styles from './family.module.css';
 import { MessageThread, type MessageView } from './message-thread';
 
@@ -15,10 +16,23 @@ interface Props {
   child: ChildOverview;
   messages: MessageView[];
   membership: Membership;
+  timeZone: string;
 }
 
-export function ChildReport({ child, messages, membership }: Props) {
+export function ChildReport({ child, messages, membership, timeZone }: Props) {
   const { profile, report } = child;
+  const classes = <ChildClasses child={child} timeZone={timeZone} />;
+
+  // Hijo real: el backend aún no tiene notas, asistencia ni proyectos. Se muestra lo que existe, sin inventar datos.
+  if (!profile) {
+    return (
+      <div className={styles.section}>
+        {classes}
+        <p className={styles.note}>Las notas, la asistencia y los proyectos aparecerán aquí cuando empiecen las clases.</p>
+      </div>
+    );
+  }
+
   const attended = child.attendance.filter((a) => a.status !== 'absent').length;
   const attendancePct = child.attendance.length ? Math.round((attended / child.attendance.length) * 100) : 0;
 
@@ -47,6 +61,7 @@ export function ChildReport({ child, messages, membership }: Props) {
     return (
       <div className={styles.section}>
         {kpis}
+        {classes}
         <p className={styles.note}>
           En primaria los niveles de Matemáticas están en definición; el resto del informe (evaluaciones, asistencia, proyectos, certificados) se mostrará igual que para cada hijo.
         </p>
@@ -58,6 +73,7 @@ export function ChildReport({ child, messages, membership }: Props) {
     <div className={styles.section}>
       <p className={styles.week}>{report.weekLabel}</p>
       {kpis}
+      {classes}
       <MathLevels level={profile.math.level} startLevel={profile.math.startLevel} progress={profile.math.progress} />
       <div className={styles.grid}>
         <article className={styles.cardF}>

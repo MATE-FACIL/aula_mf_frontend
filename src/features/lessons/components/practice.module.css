@@ -5,7 +5,7 @@
 .steps { display: flex; gap: .4rem; }
 .steps li { flex: 1; height: .45rem; border-radius: 99px; background: var(--sup2); transition: background-color .2s; }
 .stepCurrent { background: color-mix(in srgb, var(--acento) 45%, var(--sup2)) !important; }
-.stepDone { background: var(--ok) !important; }
+.stepDone { background: var(--ok-fondo) !important; }
 
 .exercise { display: grid; gap: .8rem; }
 .num { font-size: .78rem; font-weight: 800; color: var(--tx2); text-transform: uppercase; letter-spacing: .08em; }

@@ -45,7 +45,7 @@ async function Offering({ params, searchParams }: PageProps<'/admin/cursos/[id]/
           <h1>{offering.name}</h1>
           <p>
             <OfferingStatusBadge status={offering.status} /> · {scheduleSummary(offering)} (hora de Perú) · cupo {offering.maximumCapacity}
-            {query.creado !== undefined && <> · Grupo creado: asigna profesores y publícalo.</>}
+            {query.creado !== undefined && isDraft && <> · Grupo creado: asigna profesores y publícalo.</>}
           </p>
         </div>
         <span className={styles.actions}>

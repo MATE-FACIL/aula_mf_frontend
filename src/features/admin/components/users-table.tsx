@@ -40,26 +40,28 @@ export function UsersTable({ users, timeZone, linksLabel = 'Vínculos', empty = 
           <tr>
             <th scope="col">Persona</th>
             <th scope="col">Rol</th>
-            <th scope="col" className={styles.hideSm}>Usuario</th>
+            <th scope="col">Usuario</th>
             <th scope="col">Cuenta</th>
-            <th scope="col" className={cn(styles.num, styles.hideSm)}>{linksLabel}</th>
-            <th scope="col" className={styles.hideSm}>Registro</th>
+            <th scope="col" className={styles.num}>{linksLabel}</th>
+            <th scope="col">Registro</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td>
+              <td data-label="">
                 <Link href={`/admin/usuarios/${user.id}`}>{user.fullName}</Link>
                 {user.documentNumber && <span className={styles.sub}>Doc. {user.documentNumber}</span>}
               </td>
-              <td><RoleBadges roles={user.roles} /></td>
-              <td className={cn(styles.mono, styles.hideSm)}>{user.loginIdentifier ?? '—'}</td>
-              <td><StatusBadge status={user.status} /></td>
-              <td className={cn(styles.num, styles.hideSm)}>{user.linkCount}</td>
-              <td className={styles.hideSm}>
+              <td data-label="Rol"><RoleBadges roles={user.roles} /></td>
+              <td data-label="Usuario" className={styles.mono}>{user.loginIdentifier ?? '—'}</td>
+              <td data-label="Cuenta"><StatusBadge status={user.status} /></td>
+              <td data-label={linksLabel} className={styles.num}>{user.linkCount}</td>
+              <td data-label="Registro">
+                <span>
                 {formatShortDate(user.createdAt, timeZone)}
                 <span className={styles.sub}>{user.lastLoginAt ? `Último ingreso: ${formatShortDate(user.lastLoginAt, timeZone)}` : 'Nunca ingresó'}</span>
+                </span>
               </td>
             </tr>
           ))}

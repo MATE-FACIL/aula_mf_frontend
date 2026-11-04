@@ -309,8 +309,23 @@ export interface Membership {
   price: string | null;
 }
 
+/** Matrícula vigente de un hijo. */
+export interface ChildEnrollment {
+  id: string;
+  courseTitle: string;
+  offeringName: string;
+  status: 'pending' | 'active';
+  activatedAt: string | null;
+}
+
 export interface ChildOverview {
-  profile: StudentProfile;
+  id: string;
+  displayName: string;
+  enrollments: ChildEnrollment[];
+  /** Próximas clases: solo de matrículas activas. */
+  upcomingClasses: LiveClass[];
+  /** null mientras el backend no tenga notas, avance y proyectos: esas secciones no se muestran. */
+  profile: StudentProfile | null;
   report: WeeklyReport | null;
   evaluations: EvaluationSummary[];
   attendance: AttendanceRecord[];

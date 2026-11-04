@@ -325,7 +325,12 @@ export const mockServices: Services = {
       requireRole(ctx, 'family');
       await delay();
       const evaluations = store().evaluations;
+      const classes = buildSchedule(ctx.user.timeZone).classes;
       const valentina: ChildOverview = {
+        id: data.DEMO_IDS.student,
+        displayName: 'Valentina Roque',
+        enrollments: [{ id: 'enr-1', courseTitle: 'Matemáticas · Secundaria Intermedio', offeringName: 'Grupo A · Lun y Mié 5 p. m.', status: 'active', activatedAt: new Date().toISOString() }],
+        upcomingClasses: classes,
         profile: profileOf(data.DEMO_IDS.student),
         report: data.weeklyReport,
         evaluations,
@@ -336,6 +341,10 @@ export const mockServices: Services = {
         weeklyAverage: weeklyAverage(evaluations),
       };
       const mateo: ChildOverview = {
+        id: data.DEMO_IDS.sibling,
+        displayName: 'Mateo Roque',
+        enrollments: [{ id: 'enr-2', courseTitle: 'Matemáticas · Primaria por niveles', offeringName: 'Grupo B · Sáb 10 a. m.', status: 'pending', activatedAt: null }],
+        upcomingClasses: [],
         profile: data.profiles[data.DEMO_IDS.sibling],
         report: null,
         evaluations: [],

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { PageHeader, PageSkeleton } from '@/components/ui/primitives';
+import { EmptyState, PageHeader, PageSkeleton } from '@/components/ui/primitives';
 import { Tabs } from '@/components/ui/tabs';
 import { ChildReport } from '@/features/family/components/child-report';
 import type { MessageView } from '@/features/family/components/message-thread';
@@ -8,8 +8,13 @@ import { PrintButton } from '@/features/family/components/print-button';
 import { formatTime, formatWeekdayDay } from '@/lib/time';
 import { requireSession } from '@/server/auth/dal';
 import { services } from '@/services';
+import type { ChildOverview } from '@/types/domain';
 
 export const metadata: Metadata = { title: 'Familia' };
+
+/** Con perfil (edad, etapa) la etiqueta es más rica; un hijo real por ahora solo tiene su nombre. */
+const childLabel = ({ displayName, profile }: ChildOverview) =>
+  profile ? `${profile.avatar} ${profile.firstName} · ${profile.age} años · ${profile.stage}` : displayName;
 
 export default function FamilyPage() {
   return (
@@ -31,6 +36,10 @@ async function FamilyContent() {
     services.family.getMessages(ctx),
     services.family.getMembership(ctx),
   ]);
+  if (children.length === 0) {
+    return <EmptyState>Todavía no hay hijos vinculados a tu cuenta. Escríbenos y los agregamos.</EmptyState>;
+  }
+
   const tz = ctx.user.timeZone;
   const messageViews: MessageView[] = messages.map((m) => ({
     id: m.id,
@@ -45,9 +54,9 @@ async function FamilyContent() {
       label="Elegir hijo"
       variant="pills"
       items={children.map((child) => ({
-        id: child.profile.id,
-        label: `${child.profile.avatar} ${child.profile.firstName} · ${child.profile.age} años · ${child.profile.stage}`,
-        panel: <ChildReport child={child} messages={messageViews} membership={membership} />,
+        id: child.id,
+        label: childLabel(child),
+        panel: <ChildReport child={child} messages={messageViews} membership={membership} timeZone={tz} />,
       }))}
     />
   );
