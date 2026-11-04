@@ -469,7 +469,7 @@ export const mockAdmin: AdminService = {
       const course = store().courses.find((c) => c.id === o.courseId);
       const taken = takenSeats(o.id);
       return {
-        id: o.id, courseId: o.courseId, courseTitle: course?.title ?? '', name: o.name, isPublished: course?.isPublished ?? false,
+        id: o.id, courseId: o.courseId, courseTitle: course?.title ?? '', name: o.name, isPublished: o.status === 'published',
         maximumCapacity: o.maximumCapacity, takenSeats: taken, freeSeats: Math.max(0, o.maximumCapacity - taken),
       };
     });
@@ -484,6 +484,9 @@ export const mockAdmin: AdminService = {
     }
     const offering = enrollmentStore().offerings.find((o) => o.id === courseOfferingId);
     if (!offering) throw new ApiError('not_found', 'Edición', 404, undefined, 'No encontramos esa edición del curso.');
+    if (offering.status !== 'published') {
+      throw new ApiError('conflict', 'Borrador', 409, undefined, 'Este grupo todavía está en borrador. Publícalo para poder matricular.');
+    }
     const live = enrollmentStore().enrollments.filter((e) => e.courseOfferingId === offering.id && e.status !== 'withdrawn');
     if (live.some((e) => e.studentUserId === studentUserId)) {
       throw new ApiError('conflict', 'Duplicada', 409, undefined, 'El alumno ya está matriculado en esta edición.');

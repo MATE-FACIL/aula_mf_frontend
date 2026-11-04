@@ -110,7 +110,7 @@ export function EnrollmentsTable({ enrollments, timeZone, showStudent = true, em
   );
 }
 
-/** Matricular a un alumno: los grupos llenos o donde ya está matriculado aparecen deshabilitados. */
+/** Matricular a un alumno: los grupos en borrador, llenos o donde ya está matriculado aparecen deshabilitados. */
 export function EnrollForm({ studentUserId, offerings, enrolledOfferingIds }: { studentUserId: string; offerings: OfferingSeats[]; enrolledOfferingIds: Set<string> }) {
   if (offerings.length === 0) {
     return <EmptyState>Todavía no hay grupos. Crea una edición del curso para poder matricular.</EmptyState>;
@@ -125,9 +125,8 @@ export function EnrollForm({ studentUserId, offerings, enrolledOfferingIds }: { 
           {offerings.map((offering) => {
             const already = enrolledOfferingIds.has(offering.id);
             return (
-              <option key={offering.id} value={offering.id} disabled={already || offering.freeSeats === 0}>
-                {offering.courseTitle} · {offering.name} — {already ? 'ya matriculado' : seatsLabel(offering)}
-                {offering.isPublished ? '' : ' (borrador)'}
+              <option key={offering.id} value={offering.id} disabled={already || !offering.isPublished || offering.freeSeats === 0}>
+                {offering.courseTitle} · {offering.name} — {already ? 'ya matriculado' : offering.isPublished ? seatsLabel(offering) : 'en borrador'}
               </option>
             );
           })}
