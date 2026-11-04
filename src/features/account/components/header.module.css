@@ -24,7 +24,7 @@
 .list li { display: flex; flex-direction: column; border-bottom: 1px solid var(--sup2); padding-bottom: .45rem; }
 .list li:last-child { border-bottom: 0; padding-bottom: 0; }
 .list a { text-decoration: none; }
-.list a:hover { color: var(--acento); }
+.list a:hover { color: var(--acento-tx); }
 .list small { color: var(--tx2); font-size: .78rem; }
 
 @media (max-width: 560px) {

@@ -17,6 +17,6 @@
 .certificates li { min-width: 0; display: flex; align-items: center; gap: .9rem; background: var(--sup); border: var(--borde); border-radius: var(--radio); padding: .9rem 1rem; }
 .certificates div { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .certificates small { color: var(--tx2); font-size: .82rem; }
-.seal { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: #fff; font-weight: 800; flex: none; }
+.seal { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: var(--ok-fondo); color: #fff; font-weight: 800; flex: none; }
 .certPending { opacity: .7; border-style: dashed !important; }
 .certPending .seal { background: var(--sup2); color: var(--tx2); }

@@ -14,13 +14,13 @@
 .quiz { display: grid; gap: 1rem; box-shadow: var(--sombra); }
 .quizHead { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .clock { font-family: var(--display); font-weight: 800; font-variant-numeric: tabular-nums; background: var(--amarillo); color: var(--navy); border: var(--borde-fino); border-radius: 99px; padding: .25rem .8rem; }
-.clockWarning { background: var(--error); color: #fff; }
+.clockWarning { background: var(--error-fondo); color: #fff; }
 .notice { font-size: .85rem; color: var(--tx2); }
 .warning { font-weight: 800; color: var(--error); background: color-mix(in srgb, var(--error) 8%, var(--sup)); border-radius: .7rem; padding: .5rem .8rem; }
 
 .question { border: var(--borde-fino); border-radius: 1rem; padding: .9rem 1rem; display: grid; gap: .6rem; }
 .question legend { font-weight: 800; padding: 0 .3rem; }
-.question legend span { color: var(--acento); }
+.question legend span { color: var(--acento-tx); }
 .options { display: flex; flex-wrap: wrap; gap: .5rem; }
 .options label { border: 2px solid color-mix(in srgb, var(--linea) 25%, transparent); border-radius: .7rem; padding: .4rem .8rem; display: inline-flex; gap: .4rem; align-items: center; font-weight: 700; cursor: pointer; }
 .optionChecked { border-color: var(--linea) !important; background: var(--aviso-fondo); }

@@ -1,14 +1,14 @@
 .note { font-size: .88rem; color: var(--tx2); }
 
 /* Niveles de Matemáticas */
-.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(4.8rem, 1fr)); gap: .4rem; }
-.level { border: var(--borde-fino); border-radius: .8rem; padding: .55rem .4rem; text-align: center; background: var(--sup); display: flex; flex-direction: column; gap: .1rem; }
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.6rem, 1fr)); gap: .4rem; }
+.level { min-width: 0; border: var(--borde-fino); border-radius: .8rem; padding: .55rem .4rem; text-align: center; background: var(--sup); display: flex; flex-direction: column; gap: .1rem; }
 .level b { font-family: var(--display); font-size: .95rem; }
 .level small { font-size: .7rem; color: var(--tx2); }
-.levelDone { background: var(--mate); color: #fff; }
-.levelDone small { color: #e0f6f5; }
+.levelDone { background: var(--mate-oscuro); color: #fff; }
+.levelDone small { color: #fff; }
 .levelCurrent { background: var(--acento); color: #fff; box-shadow: var(--sombra-sm); }
-.levelCurrent small { color: #ffe3ec; }
+.levelCurrent small { color: #fff; }
 
 /* Frecuencia */
 .frequency { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .6rem; }
@@ -23,19 +23,20 @@
 .lab { border: var(--borde); border-radius: var(--radio); padding: .8rem; background: color-mix(in srgb, var(--c) 8%, var(--sup)); display: flex; flex-direction: column; gap: .15rem; }
 .lab b { font-size: .9rem; line-height: 1.25; }
 .lab small { font-size: .75rem; }
-.lab_current { background: var(--c); color: #fff; box-shadow: var(--sombra); }
+/* --c es el color del área: oscurecido cuando va de fondo con texto blanco, mezclado con --tx cuando va de texto. */
+.lab_current { background: color-mix(in srgb, var(--c) 62%, #000); color: #fff; box-shadow: var(--sombra); }
 .lab_upcoming { opacity: .75; border-style: dashed; }
 .labMonth { font-family: var(--display); font-weight: 800; }
-.labArea { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--c); }
+.labArea { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: color-mix(in srgb, var(--c) 50%, var(--tx)); }
 .lab_current .labArea { color: #fff; }
 
 /* Lecciones */
 .lessons { display: grid; gap: .5rem; }
 .lesson { display: flex; align-items: center; gap: .8rem; background: var(--sup); border: var(--borde); border-radius: calc(var(--radio) * .8); padding: .75rem .9rem; }
 .lessonNum { width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .85rem; flex: none; background: var(--sup2); }
-.lesson_done .lessonNum { background: var(--ok); color: #fff; }
+.lesson_done .lessonNum { background: var(--ok-fondo); color: #fff; }
 .lesson_current { outline: 3px solid var(--c); outline-offset: -3px; }
-.lesson_current .lessonNum { background: var(--c); color: #fff; }
+.lesson_current .lessonNum { background: color-mix(in srgb, var(--c) 62%, #000); color: #fff; }
 .lesson_locked { opacity: .6; }
 .lessonText { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
 .lessonText a { text-decoration: none; }
@@ -45,6 +46,6 @@
   .lessonGo { min-height: 2.5rem; display: inline-flex; align-items: center; }
 }
 .lessonText small { color: var(--tx2); font-size: .8rem; }
-.lessonGo { background: var(--c); color: #fff; text-decoration: none; font-weight: 800; font-size: .82rem; padding: .45rem .8rem; border-radius: 99px; white-space: nowrap; }
+.lessonGo { background: color-mix(in srgb, var(--c) 62%, #000); color: #fff; text-decoration: none; font-weight: 800; font-size: .82rem; padding: .45rem .8rem; border-radius: 99px; white-space: nowrap; }
 
 

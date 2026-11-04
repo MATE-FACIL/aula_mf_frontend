@@ -5,8 +5,8 @@
 .trackTab span { font-family: var(--display); font-weight: 800; font-size: 1.1rem; }
 .trackTab small { color: var(--tx2); font-weight: 700; }
 .trackTab[aria-selected='true'] small { color: #fff; }
-.trackMath[aria-selected='true'] { background: var(--mate); }
-.trackLab[aria-selected='true'] { background: var(--ruta-creator); }
+.trackMath[aria-selected='true'] { background: var(--mate-oscuro); }
+.trackLab[aria-selected='true'] { background: color-mix(in srgb, var(--ruta-creator) 62%, #000); }
 
 .head small { color: var(--tx2); font-weight: 800; }
 .challenge { display: grid; gap: .4rem; padding-left: 1.2rem; margin-top: .6rem; }

@@ -83,21 +83,25 @@ export function EnrollmentsTable({ enrollments, timeZone, showStudent = true, em
           {enrollments.map((enrollment) => (
             <tr key={enrollment.id}>
               {showStudent && (
-                <td>
+                <td data-label="">
                   <Link href={`/admin/usuarios/${enrollment.studentUserId}`}>{enrollment.studentName}</Link>
                   {enrollment.studentDocument && <span className={styles.sub}>Doc. {enrollment.studentDocument}</span>}
                 </td>
               )}
-              <td>
-                {enrollment.courseTitle}
-                <span className={styles.sub}>{enrollment.offeringName}</span>
+              <td data-label="Curso y grupo">
+                <span>
+                  {enrollment.courseTitle}
+                  <span className={styles.sub}>{enrollment.offeringName}</span>
+                </span>
               </td>
-              <td>
-                <EnrollmentBadge status={enrollment.status} />
-                {enrollment.paymentNote && <span className={styles.sub}>{enrollment.paymentNote}</span>}
-                <History enrollment={enrollment} timeZone={timeZone} />
+              <td data-label="Estado">
+                <span>
+                  <EnrollmentBadge status={enrollment.status} />
+                  {enrollment.paymentNote && <span className={styles.sub}>{enrollment.paymentNote}</span>}
+                  <History enrollment={enrollment} timeZone={timeZone} />
+                </span>
               </td>
-              <td><EnrollmentActions enrollment={enrollment} /></td>
+              <td data-label=""><EnrollmentActions enrollment={enrollment} /></td>
             </tr>
           ))}
         </tbody>

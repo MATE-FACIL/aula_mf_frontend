@@ -33,7 +33,7 @@
 .help { font-size: .82rem; color: var(--tx2); text-align: center; }
 
 .demo { font-size: .85rem; background: var(--sup2); border-radius: .8rem; padding: .6rem .8rem; }
-.demo summary { cursor: pointer; font-weight: 800; color: var(--acento); }
+.demo summary { cursor: pointer; font-weight: 800; color: var(--acento-tx); }
 .demo p { margin-top: .35rem; }
 .demo code { background: var(--sup); padding: 0 .3rem; border-radius: .3rem; }
 

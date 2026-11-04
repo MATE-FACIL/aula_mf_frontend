@@ -16,8 +16,11 @@
   --navy: #16213a;
   --rosa: #ff5c8a;
   --amarillo: #ffd23f;
-  --ok: #1f9d55;
-  --error: #d64545;
+  /* --ok y --error son para TEXTO; sobre ellos como fondo va blanco con --ok-fondo y --error-fondo. */
+  --ok: #157a41;
+  --ok-fondo: #157a41;
+  --error: #c93232;
+  --error-fondo: #c93232;
   --aviso: #7a5600;
   --aviso-fondo: #fff3c4;
 
@@ -28,7 +31,9 @@
   --sup: #ffffff;
   --sup2: #eef2fb;
   --fondo: #f6f8ff;
-  --acento: #e5487a;
+  /* Rosa de marca: --acento para fondos con texto blanco, --acento-tx para texto. Ambos cumplen 4.5:1 (WCAG AA). */
+  --acento: #cf2f68;
+  --acento-tx: #c2255c;
   /* Línea de bordes y sombras sólidas (azul marino en claro, casi blanco en oscuro). */
   --linea: var(--navy);
   /* Fondo/tinta de los elementos «seleccionados» de alto contraste (pestañas, etiqueta de área). */
@@ -80,6 +85,7 @@
   --linea: #dfe6f5;
   --contraste: #eef2fb;
   --contraste-tx: #16213a;
+  --acento-tx: #ff8db0;
   --ok: #3ccf82;
   --error: #ff6b6b;
   --aviso: #ffe08a;
@@ -158,7 +164,7 @@ h3 { font-size: 1.1rem; }
 .btn--lg { padding: .95rem 1.4rem; font-size: 1.05rem; }
 .btn--sm { padding: .4rem .8rem; font-size: .85rem; border-width: 2px; box-shadow: 2px 2px 0 var(--linea); }
 
-.link { font-weight: 800; font-size: .88rem; color: var(--acento); text-decoration: none; background: none; border: 0; padding: 0; }
+.link { font-weight: 800; font-size: .88rem; color: var(--acento-tx); text-decoration: none; background: none; border: 0; padding: 0; }
 .link:hover { text-decoration: underline; }
 @media (pointer: coarse) {
   .link { position: relative; }
