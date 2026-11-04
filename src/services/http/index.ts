@@ -4,6 +4,7 @@ import type { Services } from '../contracts';
 import { httpAdmin } from './admin';
 import { backendAuth } from './auth';
 import { fetchLiveSchedule } from './classes';
+import { fetchChildren } from './family';
 import { enc } from './shared';
 
 // Implementación contra la API .NET. Cada método es una llamada fina: la lógica de negocio
@@ -55,9 +56,10 @@ export const httpServices: Services = {
   },
 
   family: {
-    getChildren: ({ token }) => apiRequest('/families/me/children', { token }),
-    getMessages: ({ token }) => apiRequest('/families/me/messages', { token }),
+    getChildren: fetchChildren,
+    // Mensajes y membresía aún no existen en el backend: esas secciones no se muestran a hijos reales.
+    getMessages: async () => [],
     sendMessage: ({ token }, text) => apiRequest('/families/me/messages', { method: 'POST', token, body: { text } }),
-    getMembership: ({ token }) => apiRequest('/families/me/membership', { token }),
+    getMembership: async () => ({ plan: 'Por confirmar', detail: '', renewalLabel: '—', price: null }),
   },
 };

@@ -3,13 +3,14 @@ import type { RequestContext, Services } from './contracts';
 import { httpAdmin } from './http/admin';
 import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
+import { fetchChildren } from './http/family';
 import { upcoming } from './http/live-schedule';
 import { demoUserFor, mockServices } from './mock';
 
 // Modo HÍBRIDO para probar el aula contra el backend .NET real:
 //  - Autenticación (login, sesión, logout) y panel de administración → API real
 //    (API_BASE_URL, ej.: http://localhost:5087/api/v1).
-//  - Clases en vivo y calendario del alumno → API real (SCRUM-50/51/52).
+//  - Clases en vivo y calendario del alumno, e hijos de la familia → API real (SCRUM-50/51/52 y 67).
 //  - El resto de lo que ven el alumno y la familia (lecciones, tareas, tutor…) → datos mock, porque el
 //    backend aún no tiene esos módulos.
 //
@@ -50,5 +51,6 @@ export const hybridServices: Services = {
       return { ...demo, ...live };
     },
   },
-  family: withDemoUser(mockServices.family),
+  // Hijos reales del padre (sin datos de ejemplo mezclados: serían de otro niño).
+  family: { ...withDemoUser(mockServices.family), getChildren: fetchChildren },
 };

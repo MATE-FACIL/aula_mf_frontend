@@ -23,3 +23,8 @@
 .compose input:focus { outline: none; border-color: var(--acento); }
 .compose button { border: 0; background: var(--acento); color: #fff; border-radius: 99px; padding: .5rem .9rem; font-weight: 800; }
 .compose button:disabled { opacity: .6; }
+
+/* Matrículas y próximas clases de cada hijo */
+.rows { display: grid; gap: .55rem; }
+.rows li { display: grid; gap: .1rem; min-width: 0; }
+.rows small { color: var(--tx2); font-size: .82rem; }
