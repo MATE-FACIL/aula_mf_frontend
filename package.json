@@ -9,7 +9,9 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:mock": "node e2e/run.mjs mock",
+    "e2e:real": "node e2e/run.mjs real"
   },
   "dependencies": {
     "next": "16.4.0",
@@ -23,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "playwright-core": "^1.64.1",
     "typescript": "^5",
     "vitest": "^5.0.4"
   },
