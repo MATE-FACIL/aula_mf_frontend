@@ -69,6 +69,15 @@ jobs:
             test -e ".next/standalone/$f" || { echo "::error::Falta .next/standalone/$f"; exit 1; }
           done
 
+      - name: Navegador para las pruebas e2e
+        run: pnpm exec playwright-core install --with-deps chromium
+
+      # Flujos, responsive y contraste en un navegador real, con datos mock.
+      - name: Pruebas e2e (mock)
+        run: pnpm e2e:mock
+        env:
+          E2E_BROWSER: chromium
+
   docker:
     name: Imagen Docker
     needs: checks
