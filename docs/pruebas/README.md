@@ -1,15 +1,18 @@
 # Pruebas del aula
 
-Resultados del 4 de noviembre de 2026 sobre el commit `d4bf9d2` de la rama `feat/scrum-67-68-familia`. Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 4 de noviembre de 2026 sobre el commit `82b89ee` de la rama `feat/scrum-67-68-familia`. Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
 | Unitarias (Vitest) | En memoria | **64 de 64**, en 13 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
-| Recorrido en navegador real | Aula conectada a la API en Docker | **24 de 24** |
+| Recorrido en navegador real | Aula conectada a la API en Docker | **27 de 27** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
+| Sesión y renovación | Aula conectada a la API en Docker | **12 de 12** |
 | Contraste y desborde | Modo mock | 224 combinaciones: 0 problemas |
-| Flujos en celular y modo oscuro | Modo mock | 15 de 15 |
+| Flujos en celular y modo oscuro | Modo mock | **18 de 18** |
+
+Las dos pruebas en modo mock pasaron en Edge y en Chromium, el navegador del CI.
 
 La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pruebas de la API están en las [pruebas del backend](https://github.com/MATE-FACIL/aula_mf_backend/blob/main/docs/pruebas/README.md).
 
@@ -94,6 +97,7 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 ### Administración en escritorio
 
 - Crear alumno muestra sus datos de acceso una sola vez
+- Matricular: el grupo en borrador aparece deshabilitado
 - El generador arma 4 clases
 - Crear el grupo en la API lleva a su ficha
 - Asignar profesor muestra el aviso
@@ -112,6 +116,7 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 ### Familia
 
 - Login real con rol familia lleva a /familia
+- La contraseña no queda escrita en la página oculta
 - Se ve a la hija con su curso y profesora reales
 - No aparecen datos de ejemplo
 - Cambiar de hijo muestra su matrícula pendiente
@@ -129,20 +134,56 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 ### Alumno
 
 - Login real lleva a /inicio
+- La contraseña no queda escrita en la página oculta
 - /clases muestra el curso real
 - La clase próxima ofrece «Entrar» con su enlace
 - /clases sin desborde horizontal
+
+### Sesión
+
+- login real: redirige y guarda sesión, rol y renovación
+- la sesión dura 7 días (no 15 min)
+- la cookie de renovación es httpOnly
+- /clases muestra el curso real del backend
+- /clases: la clase que empieza en 5 min tiene «Entrar» con el enlace real
+- /inicio muestra la próxima clase real
+- 4 peticiones simultáneas a punto de vencer: todas cargan
+- todas reciben el MISMO token de renovación nuevo (una sola renovación)
+- reciben un token de acceso nuevo
+- la sesión NO fue revocada (se renueva otra vez con el token rotado)
+- token vigente: no renueva (sin Set-Cookie de sesión)
+- renovación rechazada → /ingreso?expirada=1
 
 ### General
 
 - Sin errores de consola ni respuestas 5xx
 
+### Modo mock
+
+- crear alumno muestra usuario y contraseña
+- credenciales legibles en oscuro (texto claro)
+- errores por campo en el formulario
+- el generador arma 4 clases en el navegador
+- sin desborde con el horario generado
+- crear grupo lleva a su ficha
+- publicar: el grupo pasa a solo enlaces
+- sin desborde en grupo publicado
+- «Confirmar pago y activar» dentro de la pantalla, sin deslizar
+- activar matrícula actualiza la lista
+- retirar matrícula con confirmación
+- arranca en oscuro
+- el botón cambia a claro
+- el tema elegido se recuerda
+- alumno: las figuras no quedan en la página tras entrar
+- familia: la contraseña no queda en la página tras entrar
+- matricular: el grupo en borrador aparece deshabilitado
+- sin errores en consola
+
 ## Hallazgos pendientes
 
-- **Login:** después de iniciar sesión, el formulario de ingreso queda oculto en la página y conserva la contraseña escrita hasta recargar. Hay que limpiarla al entrar.
 - **Familia:** el subtítulo promete mensajes y membresía, pero un hijo real todavía no los muestra.
 - **Matrículas en celular:** «Cupos por grupo» va antes de la lista. Con los datos de prueba de esta base, la página mide 10 495 px y las matrículas quedan muy abajo.
-- **Build:** `pnpm build` falló en el primer intento y pasó en el segundo. En corridas anteriores la causa fue el `SecurityFatalError` de Next 16.4.0; conviene actualizar Next.
+- **Build:** falla de forma intermitente con SecurityFatalError, el aviso de vulnerabilidad de Next 16.4.0, y pasa al reintentar. Conviene actualizar Next.
 
 ## Cómo repetirlas
 
@@ -154,11 +195,15 @@ pnpm typecheck
 pnpm lint
 ```
 
-Para conectar el aula a la API en Docker, primero levanta el backend con `docker compose up -d --build` y luego:
+Las pruebas en navegador necesitan el build. Cada comando levanta el aula y la apaga al terminar:
 
 ```bash
 pnpm build
-API_MODE=hybrid API_BASE_URL=http://localhost:5087/api/v1 PORT=3124 node scripts/start-standalone.mjs
+pnpm e2e:mock    # sin backend; corre en el CI en cada pull request
+pnpm e2e:real    # necesita el backend en Docker
 ```
 
-Los scripts del recorrido en navegador todavía no están en este repositorio. Son scripts locales de Node.js con Playwright, así que por ahora estos resultados no se pueden repetir solo con el repo.
+- **`pnpm e2e:real`** busca el backend en `../aula_mf_backend`. Si está en otra carpeta, indícala con `E2E_BACKEND_DIR`. Una base nueva necesita antes `sh tests/e2e/setup-admin.sh` en el backend.
+- **Navegador:** por defecto usan Microsoft Edge. Con `E2E_BROWSER=chromium` usan el Chromium de Playwright (`pnpm exec playwright-core install chromium`).
+- **Capturas y video:** se guardan en `e2e/.output`, que no se sube a git. Con `E2E_VIDEO=1`, `pnpm e2e:real` también graba cada recorrido.
+- **Límite:** `pnpm e2e:real` no corre en el CI, porque necesita los dos repositorios. Hay que correrla a mano antes de fusionar cambios de pantallas conectadas a la API.
