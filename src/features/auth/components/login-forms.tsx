@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { EyeIcon, EyeOffIcon } from '@/components/ui/icons';
 import { Tabs } from '@/components/ui/tabs';
 import { loginFamilyAction, loginStudentAction } from '../actions';
@@ -28,11 +28,25 @@ interface Props {
   passwordLogin?: boolean;
 }
 
+/**
+ * Limpia el formulario al salir de la pantalla. Tras entrar, Next deja la ruta de ingreso oculta en vez de
+ * desmontarla (sus efectos sí se limpian): sin esto, la contraseña seguiría escrita en un campo oculto.
+ */
+function useClearOnLeave() {
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const form = formRef.current;
+    return () => form?.reset();
+  }, []);
+  return formRef;
+}
+
 function StudentPasswordForm({ next }: Pick<Props, 'next'>) {
   const [state, formAction, pending] = useActionState(loginStudentAction, {});
   const [visible, setVisible] = useState(false);
+  const formRef = useClearOnLeave();
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={formRef} action={formAction} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
       <label className="label">
         Tu usuario
@@ -65,12 +79,14 @@ function StudentPasswordForm({ next }: Pick<Props, 'next'>) {
 function StudentForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
   const [state, formAction, pending] = useActionState(loginStudentAction, {});
   const [secret, setSecret] = useState<string[]>([]);
+  const formRef = useClearOnLeave();
+  useEffect(() => () => setSecret([]), []);
 
   const toggle = (p: string) =>
     setSecret((current) => (current.length >= SECRET_LENGTH ? [p] : current.includes(p) ? current : [...current, p]));
 
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={formRef} action={formAction} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
       <input type="hidden" name="pictograms" value={secret.join(',')} />
       <label className="label">
@@ -115,8 +131,9 @@ function EmailForm({ next, defaultEmail, variant }: Pick<Props, 'next'> & { defa
   const [state, formAction, pending] = useActionState(loginFamilyAction, {});
   const [visible, setVisible] = useState(false);
   const copy = EMAIL_FORM_COPY[variant];
+  const formRef = useClearOnLeave();
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={formRef} action={formAction} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
       <label className="label">
         {copy.email}
