@@ -1,6 +1,6 @@
 // Flujos reales en el navegador con datos mock, en celular y modo oscuro.
 import { join } from 'node:path';
-import { base, check, finish, launch, mockToken, noHorizontalScroll, output } from '../lib.mjs';
+import { base, check, finish, launch, mockToken, noHorizontalScroll, output, waitForText } from '../lib.mjs';
 
 const browser = await launch();
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
@@ -69,6 +69,28 @@ await page.getByRole('heading', { name: 'Clases (4)' }).waitFor({ timeout: 8000 
 check('publicar: el grupo pasa a solo enlaces', await page.getByRole('button', { name: 'Guardar', exact: true }).first().isVisible() && !(await page.getByRole('button', { name: /generar horario/i }).isVisible()));
 await shot('grupo-publicado-oscuro');
 check('sin desborde en grupo publicado', await noScroll());
+
+// 4b) Asistencia (SCRUM-53): la clase pasada del Grupo A se marca; una futura sigue cerrada
+await page.goto(`${base}/admin/cursos`, { waitUntil: 'networkidle' });
+await page.getByRole('link', { name: /Secundaria Intermedio/ }).first().click();
+await page.waitForURL(/\/admin\/cursos\/[0-9a-f-]{36}$/);
+await page.getByRole('link', { name: /Grupo A/ }).first().click();
+await page.waitForURL(/grupos\/[0-9a-f-]{36}$/);
+const attendanceLinks = page.getByRole('link', { name: 'Asistencia', exact: true });
+await attendanceLinks.nth(1).click();
+await page.getByText('La asistencia se abre a las').waitFor({ timeout: 8000 });
+check('asistencia: una clase futura todavía está cerrada', true);
+await page.goBack({ waitUntil: 'networkidle' });
+await page.getByRole('link', { name: 'Asistencia', exact: true }).first().click();
+await page.getByRole('heading', { name: /Asistencia · clase 1/ }).waitFor({ timeout: 8000 });
+await page.getByRole('group', { name: /Valentina/ }).getByLabel('Tarde').check();
+await page.getByRole('button', { name: 'Guardar asistencia' }).click();
+await page.getByText('Asistencia guardada').waitFor({ timeout: 8000 });
+check('asistencia: el equipo marca la clase pasada', await page.getByRole('group', { name: /Valentina/ }).getByLabel('Tarde').isChecked());
+const attendanceSummary = await waitForText(page.getByLabel('Resumen de la clase'), (text) => /Tarde\s*1/.test(text));
+check('asistencia: el resumen cuenta la marca', /Tarde\s*1/.test(attendanceSummary), attendanceSummary);
+check('sin desborde en la asistencia', await noScroll());
+await shot('asistencia-oscuro');
 
 // 5) Matrículas en tarjetas: acciones a la vista, activar y retirar
 await page.goto(`${base}/admin/matriculas`, { waitUntil: 'networkidle' });
