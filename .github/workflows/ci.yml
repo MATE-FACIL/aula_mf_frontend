@@ -7,7 +7,8 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    # dev reúne lo terminado; main es lo que se publica.
+    branches: [main, dev]
   workflow_dispatch:
 
 # Un push nuevo a la misma rama cancela la ejecución anterior del PR; en main nunca se cancela.
