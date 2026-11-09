@@ -7,6 +7,7 @@ import type {
   AdminLinkedUser,
   AdminUserDetail,
   AdminUserListItem,
+  AttendanceMarkStatus,
   BackendRole,
   CourseCategory,
   CourseOffering,
@@ -16,6 +17,8 @@ import type {
   IssuedCredentials,
   OfferingSeats,
   SaveOfferingInput,
+  SessionAttendance,
+  SessionAttendanceStudent,
 } from '@/types/admin';
 import type { AdminService, RequestContext } from '../contracts';
 
@@ -189,12 +192,17 @@ function createEnrollmentStore() {
       const startsAt = new Date(monday.getTime() + i * 7 * 86_400_000);
       return { id: randomUUID(), startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + minutes * 60_000).toISOString(), virtualLink: 'https://meet.example.com/mf-mate' };
     });
+  const pastSession = () => {
+    const startsAt = new Date(monday.getTime() - 14 * 86_400_000);
+    return { id: randomUUID(), startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + 90 * 60_000).toISOString(), virtualLink: 'https://meet.example.com/mf-mate' };
+  };
   const offering = (courseId: string, name: string, maximumCapacity: number, status: 'draft' | 'published', instructorIds: string[], sessions: CourseOffering['sessions']): MockOffering => ({
     id: randomUUID(), courseId, name, status, maximumCapacity, basePrice: 180, currencyCode: 'PEN',
     plannedSessionCount: sessions.length, instructorIds, sessions,
   });
   const offerings: MockOffering[] = [
-    offering(mate.id, 'Grupo A · Lun y Mié 5 p. m.', 8, 'published', [instructors[0].id], weekly(4, 90)),
+    // Una clase de hace dos semanas: permite probar la asistencia en modo demo (las demás son futuras).
+    offering(mate.id, 'Grupo A · Lun y Mié 5 p. m.', 8, 'published', [instructors[0].id], [pastSession(), ...weekly(4, 90)]),
     offering(mate.id, 'Grupo B · Sáb 10 a. m.', 2, 'published', [instructors[0].id], weekly(4, 90)),
     offering(lab.id, 'Grupo único · Vie 4 p. m.', 12, 'draft', [], weekly(2, 90)),
   ];
@@ -220,6 +228,35 @@ function createEnrollmentStore() {
 }
 
 const globalForEnrollments = globalThis as unknown as { __mfMockEnrollments?: ReturnType<typeof createEnrollmentStore> };
+// Asistencia por clase: sessionId → alumno → marca. Vive en memoria como el resto del modo demo.
+type MockMark = { status: AttendanceMarkStatus; note: string | null; recordedAt: string };
+const globalForAttendance = globalThis as unknown as { __mfMockAttendance?: Map<string, Map<string, MockMark>> };
+const attendanceStore = () => (globalForAttendance.__mfMockAttendance ??= new Map());
+const ATTENDANCE_OPENS_BEFORE_MS = 15 * 60_000;
+
+function sessionAttendance(sessionId: string): SessionAttendance | null {
+  const offering = enrollmentStore().offerings.find((o) => o.sessions.some((s) => s.id === sessionId));
+  if (!offering || offering.status !== 'published') return null;
+  const session = offering.sessions.find((s) => s.id === sessionId)!;
+  const course = store().courses.find((c) => c.id === offering.courseId);
+  const enrolled = new Set(enrollmentStore().enrollments
+    .filter((e) => e.courseOfferingId === offering.id && e.status === 'active').map((e) => e.studentUserId));
+  const marks = attendanceStore().get(sessionId) ?? new Map<string, MockMark>();
+  const opensAt = new Date(Date.parse(session.startsAt) - ATTENDANCE_OPENS_BEFORE_MS).toISOString();
+  const students = [...new Set([...enrolled, ...marks.keys()])]
+    .map((id) => store().people.find((p) => p.id === id))
+    .filter((p): p is Person => Boolean(p))
+    .map((p): SessionAttendanceStudent => {
+      const mark = marks.get(p.id);
+      return { studentUserId: p.id, fullName: fullName(p), status: mark?.status ?? null, note: mark?.note ?? null, recordedAt: mark?.recordedAt ?? null, enrolled: enrolled.has(p.id) };
+    })
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'));
+  return {
+    sessionId, offeringId: offering.id, courseTitle: course?.title ?? '', offeringName: offering.name,
+    startsAt: session.startsAt, endsAt: session.endsAt, opensAt, canMark: Date.now() >= Date.parse(opensAt), students,
+  };
+}
+
 const enrollmentStore = () => (globalForEnrollments.__mfMockEnrollments ??= createEnrollmentStore());
 
 const takenSeats = (offeringId: string) =>
@@ -582,6 +619,29 @@ export const mockAdmin: AdminService = {
     if (!session) throw new ApiError('validation', 'Sesión', 400, undefined, 'Session does not belong to this edition.');
     session.virtualLink = virtualLink;
     return o;
+  },
+
+  async getSessionAttendance(ctx, sessionId) {
+    requireAdmin(ctx);
+    await delay();
+    return sessionAttendance(sessionId);
+  },
+
+  async markAttendance(ctx, sessionId, records) {
+    requireAdmin(ctx);
+    await delay();
+    const view = sessionAttendance(sessionId);
+    if (!view) throw new ApiError('not_found', 'Clase', 404, undefined, 'No encontramos esa clase.');
+    if (!view.canMark) throw new ApiError('conflict', 'Cerrada', 409, undefined, 'Todavía no empieza la clase: la asistencia se abre 15 minutos antes.');
+    const enrolled = new Set(view.students.filter((s) => s.enrolled).map((s) => s.studentUserId));
+    if (records.some((r) => !enrolled.has(r.studentUserId))) {
+      throw new ApiError('validation', 'Fuera del grupo', 400, undefined, 'Solo se puede marcar a alumnos con matrícula activa en este grupo.');
+    }
+    const marks = attendanceStore().get(sessionId) ?? new Map();
+    const now = new Date().toISOString();
+    for (const r of records) marks.set(r.studentUserId, { status: r.status, note: r.note?.trim() || null, recordedAt: now });
+    attendanceStore().set(sessionId, marks);
+    return sessionAttendance(sessionId)!;
   },
 
   async listInstructors(ctx) {

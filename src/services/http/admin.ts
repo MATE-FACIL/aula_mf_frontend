@@ -67,6 +67,11 @@ export const httpAdmin: AdminService = {
       method: 'PATCH', token, body: { virtualLink },
     }),
 
+  getSessionAttendance: ({ token }, sessionId) =>
+    nullOn404(apiRequest(`/attendance/sessions/${enc(sessionId)}`, { token })),
+  markAttendance: ({ token }, sessionId, records) =>
+    apiRequest(`/attendance/sessions/${enc(sessionId)}`, { method: 'PUT', token, body: { records } }),
+
   listInstructors: ({ token }) => apiRequest('/admin/instructors', { token }),
   createInstructor: ({ token }, input) => apiRequest('/admin/instructors', { method: 'POST', token, body: input }),
 };

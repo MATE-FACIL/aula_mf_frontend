@@ -4,6 +4,7 @@ import type { Services } from '../contracts';
 import { httpAdmin } from './admin';
 import { backendAuth } from './auth';
 import { fetchLiveSchedule } from './classes';
+import { fetchStudentAttendance } from './student-attendance';
 import { fetchChildren } from './family';
 import { enc } from './shared';
 
@@ -48,8 +49,11 @@ export const httpServices: Services = {
   },
 
   schedule: {
-    // Clases y calendario reales (SCRUM-50/51/52). Tareas, asistencia y materiales aún no existen en el backend.
-    getSchedule: async (ctx) => ({ ...(await fetchLiveSchedule(ctx)), tasks: [], attendance: [], materials: [] }),
+    // Clases, calendario (SCRUM-50/51/52) y asistencia (SCRUM-53) reales, en paralelo. Tareas y materiales aún no existen.
+    getSchedule: async (ctx) => {
+      const [live, attendance] = await Promise.all([fetchLiveSchedule(ctx), fetchStudentAttendance(ctx)]);
+      return { ...live, tasks: [], attendance: attendance.records, attendanceSummary: attendance.summary, materials: [] };
+    },
     // Los archivos deben subirse directo al almacenamiento con una URL firmada; aquí solo van sus nombres.
     submitTask: ({ token }, taskId, submission) =>
       apiRequest(`/tasks/${enc(taskId)}/submissions`, { method: 'POST', token, body: submission }),

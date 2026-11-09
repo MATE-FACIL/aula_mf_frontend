@@ -8,6 +8,7 @@ import { services } from '@/services';
 import type { IssuedCredentials } from '@/types/admin';
 import {
   isUuid,
+  parseAttendanceForm,
   parseCategoryName,
   parseCourseForm,
   parseGuardianForm,
@@ -273,6 +274,18 @@ export async function updateSessionLinkAction(_prev: AdminActionState, form: For
     await services.admin.updateSessionLink(ctx, triple[0], triple[1], triple[2], link.value);
     refresh();
     return { message: 'Enlace de la clase actualizado.' };
+  });
+}
+
+export async function markAttendanceAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const session = ids(form, 'sessionId');
+    if (!session) return BAD_REQUEST;
+    const parsed = parseAttendanceForm(form);
+    if (!parsed.ok) return { error: Object.values(parsed.fieldErrors)[0] };
+    await services.admin.markAttendance(ctx, session[0], parsed.value);
+    refresh();
+    return { message: `Asistencia guardada (${parsed.value.length} ${parsed.value.length === 1 ? 'alumno' : 'alumnos'}).` };
   });
 }
 

@@ -108,13 +108,16 @@ export function SessionLinks({ courseId, offering }: { courseId: string; offerin
             <b>Clase {index + 1}</b>
             <span className={styles.sub}>{formatLongDate(session.startsAt, TZ)}, {formatTime(session.startsAt, TZ)} – {formatTime(session.endsAt, TZ)} (hora de Perú)</span>
           </span>
-          <ActionForm action={updateSessionLinkAction}>
-            <input type="hidden" name="courseId" value={courseId} />
-            <input type="hidden" name="offeringId" value={offering.id} />
-            <input type="hidden" name="sessionId" value={session.id} />
-            <input className="input" type="url" name="virtualLink" defaultValue={session.virtualLink ?? ''} placeholder="https://…" aria-label={`Enlace de la clase ${index + 1}`} />
-            <SubmitButton className="btn--sm" pendingLabel="…">Guardar</SubmitButton>
-          </ActionForm>
+          <span className={styles.actions}>
+            <Link className="btn btn--sm" href={`/admin/cursos/${courseId}/grupos/${offering.id}/clases/${session.id}`}>Asistencia</Link>
+            <ActionForm action={updateSessionLinkAction}>
+              <input type="hidden" name="courseId" value={courseId} />
+              <input type="hidden" name="offeringId" value={offering.id} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <input className="input" type="url" name="virtualLink" defaultValue={session.virtualLink ?? ''} placeholder="https://…" aria-label={`Enlace de la clase ${index + 1}`} />
+              <SubmitButton className="btn--sm" pendingLabel="…">Guardar</SubmitButton>
+            </ActionForm>
+          </span>
         </li>
       ))}
     </ol>

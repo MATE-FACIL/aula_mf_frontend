@@ -1,7 +1,7 @@
 import { ProgressBar } from '@/components/ui/primitives';
 import { cn } from '@/lib/cn';
 import { addDaysToKey, formatDayNumber, formatShortWeekday, formatTime, formatWeekdayDay, localDateKey, zonedDateTime } from '@/lib/time';
-import type { AttendanceRecord, CalendarEvent, LiveClass } from '@/types/domain';
+import type { AttendanceRecord, AttendanceSummary, CalendarEvent, LiveClass } from '@/types/domain';
 import { LiveClasses, type LiveClassView } from './live-classes';
 import styles from './schedule.module.css';
 
@@ -60,14 +60,17 @@ export function WeekCalendar({ weekStart, events, timeZone, now }: { weekStart: 
 
 const ATTENDANCE_LABEL = { present: 'Asistió', late: 'Tarde', absent: 'Faltó' } as const;
 
-export function AttendanceList({ records }: { records: AttendanceRecord[] }) {
-  const attended = records.filter((r) => r.status !== 'absent').length;
-  const pct = records.length ? Math.round((attended / records.length) * 100) : 0;
+/** Con `summary` (datos reales) los totales cubren todas las clases; sin él se calculan de la lista. */
+export function AttendanceList({ records, summary }: { records: AttendanceRecord[]; summary?: AttendanceSummary | null }) {
+  const attended = summary ? summary.present + summary.late : records.filter((r) => r.status !== 'absent').length;
+  const total = summary ? summary.total : records.length;
+  const pct = summary ? (summary.rate ?? 0) : total ? Math.round((attended / total) * 100) : 0;
+  if (total === 0) return <p className={styles.attNote}>Todavía no hay clases con asistencia registrada.</p>;
   return (
     <div className={styles.attendance}>
       <div className={styles.attendanceSummary}>
-        <b>{attended} de {records.length} clases</b>
-        <span>{pct} % de asistencia en las últimas semanas</span>
+        <b>{attended} de {total} clases</b>
+        <span>{pct} % de asistencia{summary ? '' : ' en las últimas semanas'}</span>
         <ProgressBar value={pct} color="var(--ok)" label="Asistencia" />
       </div>
       <ol role="list" className={styles.attendanceList}>
@@ -80,7 +83,7 @@ export function AttendanceList({ records }: { records: AttendanceRecord[] }) {
           </li>
         ))}
       </ol>
-      <p className={styles.attNote}>Se registra automáticamente al entrar a la clase en vivo; el profesor la confirma al terminar.</p>
+      <p className={styles.attNote}>La registra el profesor en cada clase; «tarde» cuenta como asistencia.</p>
     </div>
   );
 }

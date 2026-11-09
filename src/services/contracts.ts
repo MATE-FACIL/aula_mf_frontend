@@ -6,6 +6,7 @@ import type {
   AnswerCheck,
   AppNotification,
   AttendanceRecord,
+  AttendanceSummary,
   Badge,
   CalendarEvent,
   Certificate,
@@ -36,6 +37,7 @@ import type {
   AdminSummary,
   AdminUserDetail,
   AdminUserListItem,
+  AttendanceMark,
   CourseCategory,
   CourseOffering,
   CreatedInstructor,
@@ -49,6 +51,7 @@ import type {
   Page,
   SaveCourseInput,
   SaveOfferingInput,
+  SessionAttendance,
   UserListFilters,
 } from '@/types/admin';
 
@@ -133,6 +136,8 @@ export interface Schedule {
   weekStart: string;
   tasks: Task[];
   attendance: AttendanceRecord[];
+  /** Totales reales del backend; null en datos de ejemplo. */
+  attendanceSummary: AttendanceSummary | null;
   materials: Material[];
 }
 
@@ -188,6 +193,10 @@ export interface AdminService {
   publishOffering(ctx: RequestContext, courseId: string, offeringId: string): Promise<CourseOffering>;
   assignInstructors(ctx: RequestContext, courseId: string, offeringId: string, instructorIds: string[]): Promise<CourseOffering>;
   updateSessionLink(ctx: RequestContext, courseId: string, offeringId: string, sessionId: string, virtualLink: string | null): Promise<CourseOffering>;
+
+  // Asistencia de una clase (SCRUM-53): la lista se guarda completa en una sola petición.
+  getSessionAttendance(ctx: RequestContext, sessionId: string): Promise<SessionAttendance | null>;
+  markAttendance(ctx: RequestContext, sessionId: string, records: AttendanceMark[]): Promise<SessionAttendance>;
 
   listInstructors(ctx: RequestContext): Promise<Instructor[]>;
   createInstructor(ctx: RequestContext, input: NewGuardianInput): Promise<CreatedInstructor>;

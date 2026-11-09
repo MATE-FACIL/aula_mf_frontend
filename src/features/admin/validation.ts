@@ -1,4 +1,4 @@
-import type { NewGuardianInput, NewStudentInput, SaveCourseInput, SaveOfferingInput } from '@/types/admin';
+import type { NewGuardianInput, NewStudentInput, SaveCourseInput, SaveOfferingInput, AttendanceMark, AttendanceMarkStatus } from '@/types/admin';
 
 // Validación de formularios del panel ANTES de llamar a la API (mismos límites que el backend .NET):
 // evita viajes inútiles y devuelve errores por campo para mostrarlos junto a cada input.
@@ -164,4 +164,32 @@ export function parseOfferingForm(form: FormData): Parsed<SaveOfferingInput> {
     ok: true,
     value: { name, maximumCapacity: capacity, basePrice: Math.round(price * 100) / 100, currencyCode: currency, plannedSessionCount: sessions.length, sessions },
   };
+}
+
+// ─── Asistencia (SCRUM-53) ───────────────────────────────────────────
+
+export const ATTENDANCE_NOTE_MAX = 200;
+const ATTENDANCE_STATUSES = ['present', 'late', 'absent'] as const;
+
+/**
+ * Formulario de asistencia: un campo oculto `student` por alumno, y para cada uno `status-<id>` (radio) y
+ * `note-<id>`. Los alumnos sin estado elegido no se envían: quedan «sin marcar».
+ */
+export function parseAttendanceForm(form: FormData): Parsed<AttendanceMark[]> {
+  const marks: AttendanceMark[] = [];
+  for (const id of form.getAll('student')) {
+    if (!isUuid(id)) return { ok: false, fieldErrors: { attendance: 'La lista no es válida. Recarga la página.' } };
+    const status = form.get(`status-${id}`);
+    if (status === null || status === '') continue;
+    if (!ATTENDANCE_STATUSES.includes(status as AttendanceMarkStatus)) {
+      return { ok: false, fieldErrors: { attendance: 'Elige asistió, tarde o faltó.' } };
+    }
+    const note = String(form.get(`note-${id}`) ?? '').trim();
+    if (note.length > ATTENDANCE_NOTE_MAX) {
+      return { ok: false, fieldErrors: { attendance: `Cada nota admite como máximo ${ATTENDANCE_NOTE_MAX} caracteres.` } };
+    }
+    marks.push({ studentUserId: id, status: status as AttendanceMarkStatus, note: note || null });
+  }
+  if (marks.length === 0) return { ok: false, fieldErrors: { attendance: 'Marca al menos a un alumno.' } };
+  return { ok: true, value: marks };
 }
