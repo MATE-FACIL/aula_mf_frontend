@@ -1,6 +1,6 @@
 # Lista de pruebas unitarias
 
-Las 64 pruebas de Vitest, por archivo. Todas pasaron el 4 de noviembre de 2026.
+Las 71 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 
 ## `src/app/manifest.test.ts` (6)
 
@@ -10,6 +10,13 @@ Las 64 pruebas de Vitest, por archivo. Todas pasaron el 4 de noviembre de 2026.
 - manifest de la PWA → los accesos directos llevan a pantallas reales del alumno
 - service worker → solo precachea archivos que existen (si no, la instalación del SW falla entera)
 - service worker → solo toca peticiones GET del mismo origen y nunca guarda páginas (HTML autenticado)
+
+## `src/features/admin/attendance.test.ts` (4)
+
+- parseAttendanceForm → envía solo a los alumnos marcados, con su nota limpia
+- parseAttendanceForm → una nota vacía viaja como null
+- parseAttendanceForm → pide marcar al menos a un alumno
+- parseAttendanceForm → rechaza estados desconocidos, notas largas e ids alterados
 
 ## `src/features/admin/enrollments.test.ts` (3)
 
@@ -75,6 +82,12 @@ Las 64 pruebas de Vitest, por archivo. Todas pasaron el 4 de noviembre de 2026.
 - refreshTokenFrom → lee solo la cookie de renovación del backend
 - renewBackendSession → peticiones simultáneas con el mismo token hacen UNA sola renovación (el backend rota y revoca reusos)
 - renewBackendSession → distingue sesión terminada (401) de backend caído
+
+## `src/services/http/attendance.test.ts` (3)
+
+- asistencia real → conserva los totales del backend y arma cada fila
+- asistencia real → muestra la fecha en la zona horaria de quien mira
+- asistencia real → el hijo real lleva su asistencia; sin reporte queda vacío, nunca con ejemplos
 
 ## `src/services/http/family-children.test.ts` (2)
 
