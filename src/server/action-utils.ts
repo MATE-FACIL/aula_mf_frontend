@@ -16,6 +16,8 @@ export const limiters = {
   answers: createRateLimiter({ limit: 40, windowMs: 60_000 }),
   messages: createRateLimiter({ limit: 6, windowMs: 60_000 }),
   submissions: createRateLimiter({ limit: 10, windowMs: 60_000 }),
+  /** Asistencia que marca el profesor, por profesor. */
+  teacher: createRateLimiter({ limit: 60, windowMs: 60_000 }),
   /** Cambios del panel de administración, por administrador. */
   admin: createRateLimiter({ limit: 60, windowMs: 60_000 }),
 } satisfies Record<string, RateLimiter>;

@@ -2,8 +2,8 @@
 // los servicios HTTP deben devolver exactamente estas formas (DTOs en camelCase).
 // Fechas siempre en ISO 8601 UTC; la UI las muestra en la zona horaria del usuario.
 
-/** Área del aula de la sesión. El backend la deriva de sus roles (student, guardian, administrator). */
-export type Role = 'student' | 'family' | 'admin';
+/** Área del aula de la sesión. El backend la deriva de sus roles (student, guardian, instructor, administrator). */
+export type Role = 'student' | 'family' | 'teacher' | 'admin';
 
 export interface SessionUser {
   id: string;

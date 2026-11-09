@@ -1,0 +1,65 @@
+/* Práctica (SCRUM-61, prototipo B). Una columna en el celular; los toques miden al menos 44 px. */
+
+.practice { background: var(--sup); border: var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: clamp(1rem, 3vw, 1.5rem); display: grid; gap: 1rem; min-width: 0; }
+.head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .3rem 1rem; }
+.progressText { color: var(--tx2); font-weight: 800; font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+.steps { display: flex; flex-wrap: wrap; gap: .4rem; }
+.step { min-width: 2.75rem; min-height: 2.75rem; border-radius: .7rem; border: var(--borde-fino); background: var(--sup2); color: var(--tx); font-weight: 800; }
+.stepCurrent { background: var(--acento); color: #fff; }
+.stepDone { background: var(--ok-fondo); color: #fff; }
+.stepDone.stepCurrent { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+.exercise { display: grid; gap: .9rem; }
+.num { display: flex; align-items: center; gap: .6rem; font-size: .78rem; font-weight: 800; color: var(--tx2); text-transform: uppercase; letter-spacing: .08em; }
+.solvedTag { background: color-mix(in srgb, var(--ok) 15%, var(--sup)); color: var(--ok); border-radius: 99px; padding: .1rem .55rem; letter-spacing: .02em; }
+.prompt { display: block; font-size: clamp(1.15rem, 3.5vw, 1.4rem); font-weight: 800; line-height: 1.3; padding: 0; margin-bottom: .2rem; }
+
+.options { display: grid; gap: .55rem; border: 0; padding: 0; margin: 0; min-width: 0; }
+.option { display: flex; align-items: center; gap: .7rem; min-height: 3rem; padding: .65rem .9rem; border: var(--borde-fino); border-radius: .8rem; background: var(--sup); font-weight: 700; font-size: 1.05rem; cursor: pointer; }
+.option input { width: 1.2rem; height: 1.2rem; accent-color: var(--acento); flex: none; }
+.option:has(input:checked) { background: color-mix(in srgb, var(--acento) 12%, var(--sup)); border-color: var(--acento); }
+.option:has(input:focus-visible) { outline: 3px solid var(--acento); outline-offset: 2px; }
+.options:disabled .option { cursor: default; opacity: .8; }
+
+.input { width: 100%; font-size: 1.25rem; font-weight: 700; padding: .75rem .9rem; border-radius: .8rem; border: 2px solid color-mix(in srgb, var(--tx) 25%, transparent); background: var(--sup); color: var(--tx); }
+.input:focus { border-color: var(--acento); outline: none; }
+
+.row { display: flex; flex-wrap: wrap; gap: .6rem; }
+.row :global(.btn) { min-height: 2.9rem; }
+.wide { flex: 1 1 12rem; }
+
+.feedback { display: grid; gap: .6rem; min-height: 1.5em; }
+.verdict, .message { font-weight: 800; }
+.message { color: var(--aviso); }
+.right .verdict { color: var(--ok); }
+.right .input, .right .option:has(input:checked) { border-color: var(--ok); }
+.wrong .verdict { color: var(--error); }
+.wrong .input, .wrong .option:has(input:checked) { border-color: var(--error); animation: shake .3s; }
+.explanation { background: var(--sup2); border-radius: .8rem; padding: .8rem 1rem; display: grid; gap: .25rem; }
+.explanation b { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--tx2); }
+
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .wrong .input, .wrong .option:has(input:checked) { animation: none; } }
+
+.done { text-align: center; padding: 1.2rem; border-radius: .9rem; background: color-mix(in srgb, var(--ok) 12%, var(--sup)); display: grid; gap: .5rem; justify-items: center; }
+.doneTitle { font-size: 1.3rem; font-weight: 800; }
+.doneActions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: .3rem; }
+
+.empty { color: var(--tx2); }
+
+/* Lista de prácticas */
+.courses { display: grid; gap: 1.2rem; }
+.course { display: grid; gap: .8rem; }
+.courseHead { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .3rem 1rem; }
+.courseHead p { color: var(--tx2); font-size: .9rem; }
+.lessons { display: grid; gap: .5rem; }
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .3rem 1rem; padding: .7rem .9rem; border: var(--borde-fino); border-radius: .8rem; }
+.lesson b { overflow-wrap: anywhere; }
+.lesson small { grid-column: 1; color: var(--tx2); font-weight: 700; }
+.lesson :global(.btn) { grid-row: 1 / span 2; grid-column: 2; }
+.lessonBar { grid-column: 1; }
+@media (max-width: 30rem) {
+  .lesson { grid-template-columns: 1fr; }
+  .lesson :global(.btn) { grid-row: auto; grid-column: 1; justify-self: start; }
+}

@@ -11,16 +11,19 @@ export const LOGIN_PATH = '/ingreso';
 export const HOME_BY_ROLE: Record<Role, string> = {
   student: '/inicio',
   family: '/familia',
+  teacher: '/profesor',
   admin: '/admin',
 };
 
 export const STUDENT_PATHS = ['/inicio', '/ruta', '/lecciones', '/evaluaciones', '/clases', '/logros'];
 export const FAMILY_PATHS = ['/familia'];
+export const TEACHER_PATHS = ['/profesor'];
 export const ADMIN_PATHS = ['/admin'];
 
 export const PATHS_BY_ROLE: Record<Role, string[]> = {
   student: STUDENT_PATHS,
   family: FAMILY_PATHS,
+  teacher: TEACHER_PATHS,
   admin: ADMIN_PATHS,
 };
 

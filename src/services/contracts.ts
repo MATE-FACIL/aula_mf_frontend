@@ -56,6 +56,8 @@ import type {
   SessionAttendance,
   UserListFilters,
 } from '@/types/admin';
+import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
+import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
 /** Contexto de cada llamada: el token de la sesión y el usuario ya verificado. */
 export interface RequestContext {
@@ -208,6 +210,29 @@ export interface AdminService {
   createInstructor(ctx: RequestContext, input: NewGuardianInput): Promise<CreatedInstructor>;
 }
 
+/**
+ * Práctica real del alumno (SCRUM-59/60/61): ejercicios de las lecciones publicadas de sus cursos con matrícula
+ * ACTIVA. El servidor corrige y guarda cada intento; la respuesta correcta nunca viaja al navegador.
+ */
+export interface PracticeService {
+  listCourses(ctx: RequestContext): Promise<PracticeCourse[]>;
+  /** null si la lección no existe, está en borrador o el alumno no tiene matrícula activa en su curso. */
+  getLesson(ctx: RequestContext, lessonId: string): Promise<LessonPractice | null>;
+  /** `answer`: el índice de la opción («0», «1»…) o el número escrito por el alumno. */
+  answer(ctx: RequestContext, exerciseId: string, answer: string): Promise<PracticeAnswerResult>;
+}
+
+/** Panel del profesor (SCRUM-69/70): solo sus grupos asignados. */
+export interface TeacherService {
+  listGroups(ctx: RequestContext): Promise<TeacherGroup[]>;
+  /** null si el grupo no está asignado al profesor. */
+  getGroup(ctx: RequestContext, offeringId: string): Promise<TeacherGroupDetail | null>;
+  getSessionAttendance(ctx: RequestContext, sessionId: string): Promise<SessionAttendance | null>;
+  markAttendance(ctx: RequestContext, sessionId: string, records: AttendanceMark[]): Promise<SessionAttendance>;
+  /** «Asistencia en un clic»: quienes no tienen marca quedan presentes; lo ya marcado no cambia. */
+  markRemainingPresent(ctx: RequestContext, sessionId: string): Promise<SessionAttendance>;
+}
+
 export interface Services {
   auth: AuthService;
   students: StudentService;
@@ -218,4 +243,6 @@ export interface Services {
   schedule: ScheduleService;
   family: FamilyService;
   admin: AdminService;
+  practice: PracticeService;
+  teacher: TeacherService;
 }

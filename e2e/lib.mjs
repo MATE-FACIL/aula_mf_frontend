@@ -100,7 +100,7 @@ export function realApi() {
 }
 
 const FUTURE_MINUTE = 60000;
-/** Curso publicable con profesor y un grupo publicado; `minutes` son los minutos hasta cada clase. */
+/** Curso publicable con profesor (y sus credenciales) y un grupo publicado; `minutes` son los minutos hasta cada clase. */
 export async function seedCourse(call, tag, minutes) {
   const category = await call('POST', '/course-categories', { name: `Demo ${tag}` });
   const course = await call('POST', '/courses', { title: `Geometría ${tag}`, categoryId: category.id, shortDescription: 'Figuras, ángulos y áreas con ejercicios guiados.' });
@@ -112,7 +112,7 @@ export async function seedCourse(call, tag, minutes) {
   });
   await call('PUT', `/courses/${course.id}/offerings/${offering.id}/instructors`, { instructorIds: [teacher.instructorId] });
   await call('POST', `/courses/${course.id}/offerings/${offering.id}/publish`);
-  return { course, offering, session };
+  return { course, offering, session, teacher };
 }
 
 const cookiesFrom = (res) => Object.fromEntries(res.headers.getSetCookie().map((c) => c.split(';')[0]).map((p) => [p.slice(0, p.indexOf('=')), p.slice(p.indexOf('=') + 1)]));

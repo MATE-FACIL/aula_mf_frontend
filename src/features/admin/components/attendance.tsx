@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/ui/primitives';
 import { cn } from '@/lib/cn';
 import { formatTime } from '@/lib/time';
 import type { AttendanceMarkStatus, SessionAttendance } from '@/types/admin';
-import { markAttendanceAction } from '../actions';
+import { markAttendanceAction, type AdminActionState } from '../actions';
 import { SCHEDULE_TIME_ZONE } from '../schedule';
 import { ATTENDANCE_NOTE_MAX } from '../validation';
 import { ActionForm, SubmitButton } from './action-form';
@@ -10,6 +10,9 @@ import styles from './admin.module.css';
 
 // Asistencia de una clase (SCRUM-53). Componente de servidor: la lista es un formulario normal que funciona sin
 // JavaScript, y se guarda completa en un solo envío (una petición y una transacción en el backend).
+// La usan el equipo (panel de administración) y el profesor de la clase (SCRUM-70): cambia solo la acción.
+
+type SaveAction = (prev: AdminActionState, form: FormData) => Promise<AdminActionState>;
 
 const CHOICES: { value: AttendanceMarkStatus; label: string }[] = [
   { value: 'present', label: 'Asistió' },
@@ -24,7 +27,7 @@ export function attendanceCounts(attendance: SessionAttendance) {
   return { present: count('present'), late: count('late'), absent: count('absent'), pending: attendance.students.filter((s) => s.enrolled && !s.status).length };
 }
 
-export function AttendanceSheet({ attendance }: { attendance: SessionAttendance }) {
+export function AttendanceSheet({ attendance, action = markAttendanceAction }: { attendance: SessionAttendance; action?: SaveAction }) {
   const enrolled = attendance.students.filter((s) => s.enrolled);
   const former = attendance.students.filter((s) => !s.enrolled);
 
@@ -40,10 +43,15 @@ export function AttendanceSheet({ attendance }: { attendance: SessionAttendance 
     );
   }
 
+  // Las opciones usan defaultChecked (sirven sin JavaScript), que solo se aplica al montar: si las marcas cambian en el
+  // servidor (p. ej. «Todos presentes»), la lista se vuelve a montar con lo guardado en vez de quedar desactualizada.
+  // Solo la lista: el formulario conserva su estado (el aviso de «Asistencia guardada»).
+  const version = attendance.students.map((s) => `${s.studentUserId}:${s.status ?? '-'}:${s.recordedAt ?? '-'}`).join('|');
+
   return (
-    <ActionForm action={markAttendanceAction} className={styles.roster}>
+    <ActionForm action={action} className={styles.roster}>
       <input type="hidden" name="sessionId" value={attendance.sessionId} />
-      <ol className={styles.rosterList}>
+      <ol key={version} className={styles.rosterList}>
         {enrolled.map((student) => (
           <li key={student.studentUserId} className={styles.rosterItem}>
             <input type="hidden" name="student" value={student.studentUserId} />

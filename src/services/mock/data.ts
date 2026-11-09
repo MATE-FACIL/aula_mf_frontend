@@ -28,6 +28,7 @@ export const DEMO_IDS = {
   student: 'stu-valentina',
   sibling: 'stu-mateo',
   family: 'fam-roque',
+  teacher: 'tch-lucia',
   admin: 'adm-equipo',
 } as const;
 
@@ -35,6 +36,8 @@ export const DEMO_IDS = {
 export const DEMO_CREDENTIALS = {
   student: { username: 'valentina.r', pictograms: ['🦊', '🚀', '🍕'] },
   family: { email: 'familia@matefacil.pe', password: 'matefacil123' },
+  /** Profesora Lucía Paredes: ve solo sus grupos (los mismos que el panel de administración demo). */
+  teacher: { email: 'lucia@matefacil.pe', password: 'matefacil123' },
   admin: { email: 'admin@matefacil.pe', password: 'matefacil123' },
 } as const;
 

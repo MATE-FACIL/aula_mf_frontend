@@ -1,16 +1,17 @@
 # Pruebas del aula
 
-Resultados del 9 de noviembre de 2026 sobre el último commit de la rama `feat/scrum-39-58-niveles-archivos`. Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 9 de noviembre de 2026 sobre la rama `dev`, con la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
-| Unitarias (Vitest) | En memoria | **71 de 71**, en 15 archivos |
+| Unitarias (Vitest) | En memoria | **89 de 89**, en 18 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
 | Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
 | Sesión y renovación | Aula conectada a la API en Docker | **12 de 12** |
-| Contraste y desborde | Modo mock | 232 combinaciones: 0 problemas |
-| Flujos en celular y modo oscuro | Modo mock | **25 de 25** |
+| Práctica y profesor con login real | Aula conectada a la API en Docker | **18 de 18** |
+| Contraste y desborde | Modo mock | 272 combinaciones: 0 problemas |
+| Flujos en celular, tableta y modo oscuro | Modo mock | **38 de 38** |
 
 Las dos pruebas en modo mock pasaron en Edge y en Chromium, el navegador del CI.
 
@@ -24,11 +25,14 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 |---|---|---|
 | Administración | Todo | Nada |
 | Familia | Hijos, matrículas, próximas clases, profesores y asistencia | Notificación de la campana |
-| Alumno | Clases en vivo, calendario, enlace para entrar y asistencia | Nombre del saludo («Valentina»), estrellas, lecciones, tareas, notas y avisos |
+| Alumno | Clases en vivo, calendario, enlace para entrar, asistencia y **Mis prácticas** (ejercicios, corrección y avance) | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
+| Profesor | Todo | Nada |
 
-**La sesión de administrador se firmó localmente.** Se usó la clave de desarrollo de Docker, sin pasar por el formulario de ingreso. Los logins de familia y alumno sí fueron reales, por el formulario.
+**La sesión de administrador se firmó localmente.** Se usó la clave de desarrollo de Docker, sin pasar por el formulario de ingreso. Los logins de familia, alumno y profesor sí fueron reales, por el formulario.
 
-**Las lecciones (SCRUM-55) y sus archivos (SCRUM-58) todavía no tienen pantalla.** Su API está lista y probada (ver las pruebas del backend); la pantalla del alumno es SCRUM-56 y la carga desde el panel es SCRUM-71.
+**Las lecciones (SCRUM-55) y sus archivos (SCRUM-58) todavía no tienen pantalla.** Su API está lista y probada (ver las pruebas del backend); la pantalla del alumno es SCRUM-56 y la carga desde el panel es SCRUM-71. La práctica sí la tiene: «Lecciones › Mis prácticas». Los ejercicios se cargan por la API (`PUT /courses/{id}/lessons/{id}/exercises`) hasta que exista la pantalla de carga.
+
+**El profesor ve asistencia y avance de práctica, todavía no notas.** Las notas llegan con las evaluaciones (SCRUM-62).
 
 **El contraste se midió solo en modo mock.** El recorrido real comprobó el desborde horizontal en celular y tablet, pero no volvió a medir el contraste.
 
@@ -106,6 +110,20 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 
 <img src="capturas/alumno-01-inicio-celular-oscuro.png" alt="Inicio del alumno" width="280"> <img src="capturas/alumno-02-clases-celular-oscuro.png" alt="Clases del alumno con el botón Entrar" width="280">
 
+Práctica en el celular (SCRUM-61). A la izquierda, un acierto con su explicación; a la derecha, la práctica real terminada:
+
+<img src="capturas/alumno-04-practica-respuesta-celular.png" alt="Ejercicio respondido con su explicación" width="280"> <img src="capturas/alumno-03-practica-celular.png" alt="Práctica terminada contra la API real" width="280">
+
+### Profesor
+
+Su grupo en tableta, con las clases, la asistencia y el avance de práctica de cada alumno (SCRUM-70):
+
+<img src="capturas/profesor-01-grupo-tableta.png" alt="Grupo del profesor en tableta" width="420">
+
+Asistencia tras «Todos presentes»: los dos alumnos quedan marcados en el backend y en la lista:
+
+<img src="capturas/profesor-02-asistencia-tableta.png" alt="Asistencia del profesor en tableta" width="420">
+
 ## Qué se comprobó en el navegador
 
 ### Administración en escritorio
@@ -174,6 +192,27 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 - token vigente: no renueva (sin Set-Cookie de sesión)
 - renovación rechazada → /ingreso?expirada=1
 
+### Práctica y profesor
+
+- mis prácticas: el curso real con su lección y 0 de 2
+- la práctica llega sin la respuesta ni la explicación
+- una lección que no es suya (o no existe) → «no encontrada», sin datos
+- incorrecta: el backend corrige y llega su explicación
+- correcta: el avance real sube a 1 de 2
+- termina la práctica con 2 de 2
+- práctica sin desborde en el celular
+- login real del profesor: rol teacher
+- mis grupos: solo su grupo real, sin el del otro profesor
+- el grupo: alumnos reales con su avance de práctica
+- el grupo de otro profesor → «no encontrado», sin sus datos
+- el profesor no entra a la administración
+- la clase de hoy: 2 alumnos sin marcar
+- asistencia en un clic: los 2 quedan presentes en el backend
+- la lista se actualiza: los 2 aparecen marcados «Asistió»
+- asistencia sin desborde en tableta
+- el backend guardó las 2 marcas
+- sin errores en el navegador
+
 ### General
 
 - Sin errores de consola ni respuestas 5xx
@@ -204,12 +243,26 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 - alumno: las figuras no quedan en la página tras entrar
 - familia: la contraseña no queda en la página tras entrar
 - matricular: el grupo en borrador aparece deshabilitado
+- mis prácticas lista las lecciones con su avance
+- el navegador no recibe la respuesta ni la explicación antes de responder
+- respuesta incorrecta: lo dice y muestra la explicación
+- respuesta correcta: ¡Correcto! y botón para seguir
+- formato inválido: se avisa sin enviar
+- el avance de la lección sube con cada acierto
+- práctica sin desborde en el celular
+- la profesora entra a su área y ve solo sus grupos
+- el grupo muestra clases y alumnos con su avance
+- asistencia en un clic: no queda nadie sin marcar
+- la lista refleja lo guardado (nadie queda sin opción elegida)
+- pantallas del profesor sin desborde en tableta
+- la profesora no entra a la administración
 - sin errores en consola
 
 ## Hallazgos pendientes
 
 - **Familia:** el subtítulo promete mensajes y membresía, pero un hijo real todavía no los muestra.
 - **Matrículas en celular:** «Cupos por grupo» va antes de la lista. Con los datos de prueba de esta base, la página mide 10 495 px y las matrículas quedan muy abajo.
+- **Estado HTTP de «no encontrado»:** las páginas cargan dentro de `<Suspense>`, así que un id ajeno muestra «Esta página no existe» pero con estado 200 (la respuesta ya empezó a enviarse). No filtra datos; solo afecta a buscadores y monitoreo.
 - **Build:** falla de forma intermitente con SecurityFatalError, el aviso de vulnerabilidad de Next 16.4.0, y pasa al reintentar. Conviene actualizar Next.
 
 ## Cómo repetirlas
