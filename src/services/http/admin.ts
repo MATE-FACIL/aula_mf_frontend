@@ -67,6 +67,9 @@ export const httpAdmin: AdminService = {
       method: 'PATCH', token, body: { virtualLink },
     }),
 
+  listMathLevels: ({ token }) => apiRequest('/math-levels', { token }),
+  provisionMathLevels: ({ token }) => apiRequest('/math-levels/provision', { method: 'POST', token }),
+
   getSessionAttendance: ({ token }, sessionId) =>
     nullOn404(apiRequest(`/attendance/sessions/${enc(sessionId)}`, { token })),
   markAttendance: ({ token }, sessionId, records) =>

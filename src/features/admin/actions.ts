@@ -277,6 +277,19 @@ export async function updateSessionLinkAction(_prev: AdminActionState, form: For
   });
 }
 
+/** Sin campos: useActionState le pasa el estado y el formulario, que no necesita. */
+export async function provisionMathLevelsAction(): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const result = await services.admin.provisionMathLevels(ctx);
+    refresh();
+    return {
+      message: result.created === 0
+        ? 'Los 8 niveles ya existían: no se cambió nada.'
+        : `Se crearon ${result.created} ${result.created === 1 ? 'nivel' : 'niveles'} con sus 14 sesiones en borrador.`,
+    };
+  });
+}
+
 export async function markAttendanceAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
   return adminMutation(async (ctx) => {
     const session = ids(form, 'sessionId');

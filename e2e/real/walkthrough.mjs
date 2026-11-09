@@ -135,6 +135,18 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   const summary = await waitForText(page.getByLabel('Resumen de la clase'), (text) => /Asistió\s*1/.test(text) && /Tarde\s*1/.test(text));
   check('Admin', 'Asistencia: se guarda la lista y el resumen la cuenta', /Asistió\s*1/.test(summary) && /Tarde\s*1/.test(summary), summary);
   await shot(page, 'admin-08-asistencia-escritorio');
+
+  // Niveles de Matemáticas (SCRUM-39): si faltan se crean; en cualquier caso quedan los 8 con sus sesiones.
+  await page.goto(`${base}/admin/cursos/niveles`, { waitUntil: 'networkidle' });
+  await settled(page);
+  const provision = page.getByRole('button', { name: 'Crear los niveles que faltan' });
+  if (await provision.isVisible()) {
+    await provision.click();
+    await page.getByText(/Se crearon \d+ nivel/).waitFor({ timeout: 10000 });
+  }
+  const levelsText = await waitForText(page.getByRole('main'), (text) => (text.match(/\d+ sesiones ·/g) ?? []).length === 8);
+  check('Admin', 'Niveles: los 8 existen, cada uno con sus sesiones', (levelsText.match(/\d+ sesiones ·/g) ?? []).length === 8, levelsText.slice(0, 200));
+  await shot(page, 'admin-10-niveles-escritorio');
   await closeSession(s, 'admin-escritorio');
 }
 
@@ -153,6 +165,9 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   await page.waitForURL(/\/admin\/cursos\/[0-9a-f-]{36}/);
   await page.waitForLoadState('networkidle');
   check('Admin celular', 'Ficha del curso sin desborde horizontal', await noScroll(page));
+  await page.goto(`${base}/admin/cursos/niveles`, { waitUntil: 'networkidle' });
+  check('Admin celular', 'Niveles sin desborde horizontal', await noScroll(page));
+  await shot(page, 'admin-11-niveles-celular-oscuro', false);
   await page.goto(`${base}/admin/cursos/${course.id}/grupos/${offering.id}`, { waitUntil: 'networkidle' });
   await page.getByRole('link', { name: 'Asistencia', exact: true }).first().click();
   await page.getByRole('heading', { name: /Asistencia · clase 1/ }).waitFor({ timeout: 10000 });

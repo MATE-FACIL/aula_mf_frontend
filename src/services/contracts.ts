@@ -45,10 +45,12 @@ import type {
   EnrollmentFilters,
   Instructor,
   IssuedCredentials,
+  MathLevel,
   NewGuardianInput,
   NewStudentInput,
   OfferingSeats,
   Page,
+  ProvisionedLevels,
   SaveCourseInput,
   SaveOfferingInput,
   SessionAttendance,
@@ -193,6 +195,10 @@ export interface AdminService {
   publishOffering(ctx: RequestContext, courseId: string, offeringId: string): Promise<CourseOffering>;
   assignInstructors(ctx: RequestContext, courseId: string, offeringId: string, instructorIds: string[]): Promise<CourseOffering>;
   updateSessionLink(ctx: RequestContext, courseId: string, offeringId: string, sessionId: string, virtualLink: string | null): Promise<CourseOffering>;
+
+  // Niveles de Matemáticas (SCRUM-39): crear los que faltan se puede repetir sin duplicar nada.
+  listMathLevels(ctx: RequestContext): Promise<MathLevel[]>;
+  provisionMathLevels(ctx: RequestContext): Promise<ProvisionedLevels>;
 
   // Asistencia de una clase (SCRUM-53): la lista se guarda completa en una sola petición.
   getSessionAttendance(ctx: RequestContext, sessionId: string): Promise<SessionAttendance | null>;

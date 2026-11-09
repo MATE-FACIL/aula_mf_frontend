@@ -92,6 +92,18 @@ check('asistencia: el resumen cuenta la marca', /Tarde\s*1/.test(attendanceSumma
 check('sin desborde en la asistencia', await noScroll());
 await shot('asistencia-oscuro');
 
+// 4c) Niveles de Matemáticas (SCRUM-39): crear los que faltan, una sola vez
+await page.goto(`${base}/admin/cursos`, { waitUntil: 'networkidle' });
+await page.getByRole('link', { name: 'Niveles de Matemáticas' }).click();
+await page.waitForURL(/\/admin\/cursos\/niveles$/);
+await page.getByRole('button', { name: 'Crear los niveles que faltan' }).click();
+await page.getByText('Se crearon 8 niveles').waitFor({ timeout: 8000 });
+const levelLinks = await waitForText(page.getByRole('main'), (text) => (text.match(/14 sesiones ·/g) ?? []).length === 8);
+check('niveles: se crean los 8 con sus 14 sesiones', (levelLinks.match(/14 sesiones ·/g) ?? []).length === 8, levelLinks.slice(0, 200));
+check('niveles: ya no se ofrece crearlos otra vez', !(await page.getByRole('button', { name: 'Crear los niveles que faltan' }).isVisible()));
+check('sin desborde en niveles', await noScroll());
+await shot('niveles-oscuro');
+
 // 5) Matrículas en tarjetas: acciones a la vista, activar y retirar
 await page.goto(`${base}/admin/matriculas`, { waitUntil: 'networkidle' });
 const activate = page.getByRole('button', { name: 'Confirmar pago y activar' }).first();

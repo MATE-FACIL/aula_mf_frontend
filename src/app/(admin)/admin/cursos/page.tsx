@@ -13,6 +13,7 @@ export default function CoursesPage() {
   return (
     <div className="page">
       <PageHeader title="Cursos" description="Catálogo de cursos: textos, categoría, portada y publicación en la web.">
+        <Link className="btn" href="/admin/cursos/niveles">Niveles de Matemáticas</Link>
         <Link className="btn btn--primary" href="/admin/cursos/nuevo">+ Nuevo curso</Link>
       </PageHeader>
       <Suspense fallback={<PageSkeleton />}>

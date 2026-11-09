@@ -15,6 +15,7 @@ import type {
   EnrollmentStatus,
   Instructor,
   IssuedCredentials,
+  MathLevel,
   OfferingSeats,
   SaveOfferingInput,
   SessionAttendance,
@@ -255,6 +256,29 @@ function sessionAttendance(sessionId: string): SessionAttendance | null {
     sessionId, offeringId: offering.id, courseTitle: course?.title ?? '', offeringName: offering.name,
     startsAt: session.startsAt, endsAt: session.endsAt, opensAt, canMark: Date.now() >= Date.parse(opensAt), students,
   };
+}
+
+// Niveles de Matemáticas (SCRUM-39): nivel → curso. Cada nivel creado trae sus 14 sesiones en borrador.
+const LEVEL_SESSIONS = 14;
+const LEVEL_DEFINITIONS = (['primary', 'secondary'] as const).flatMap((stage) =>
+  (['prebasic', 'basic', 'intermediate', 'advanced'] as const).map((level, index) => ({
+    stage, level,
+    stageLabel: stage === 'primary' ? 'Primaria' : 'Secundaria',
+    levelLabel: ['Prebásico', 'Básico', 'Intermedio', 'Avanzado'][index],
+    sessionMinutes: stage === 'primary' ? 60 : 90,
+  })));
+const globalForLevels = globalThis as unknown as { __mfMockLevels?: Map<string, string> };
+const levelStore = () => (globalForLevels.__mfMockLevels ??= new Map());
+
+function mathLevels(): MathLevel[] {
+  return LEVEL_DEFINITIONS.map((definition) => {
+    const courseId = levelStore().get(`${definition.stage}:${definition.level}`) ?? null;
+    const course = courseId ? store().courses.find((c) => c.id === courseId) : undefined;
+    return {
+      ...definition, courseId: course?.id ?? null, courseTitle: course?.title ?? null, coursePublished: course?.isPublished ?? false,
+      lessons: course ? LEVEL_SESSIONS : 0, publishedLessons: 0,
+    };
+  });
 }
 
 const enrollmentStore = () => (globalForEnrollments.__mfMockEnrollments ??= createEnrollmentStore());
@@ -619,6 +643,33 @@ export const mockAdmin: AdminService = {
     if (!session) throw new ApiError('validation', 'Sesión', 400, undefined, 'Session does not belong to this edition.');
     session.virtualLink = virtualLink;
     return o;
+  },
+
+  async listMathLevels(ctx) {
+    requireAdmin(ctx);
+    await delay();
+    return mathLevels();
+  },
+
+  async provisionMathLevels(ctx) {
+    requireAdmin(ctx);
+    await delay();
+    const links = levelStore();
+    let created = 0;
+    const category = store().categories.find((c) => c.name === 'Matemáticas') ?? store().categories[0];
+    for (const definition of LEVEL_DEFINITIONS) {
+      const key = `${definition.stage}:${definition.level}`;
+      if (links.has(key)) continue;
+      const course: AdminCourse = {
+        id: randomUUID(), title: `Matemáticas · ${definition.stageLabel} ${definition.levelLabel}`, categoryId: category?.id ?? null,
+        isPublished: false, shortDescription: null, fullDescription: null, objectives: null, syllabus: null, targetAudience: null,
+        prerequisites: null, coverUrl: null, coverOriginalFileName: null, sessionDurationMinutes: definition.sessionMinutes,
+      };
+      store().courses.push(course);
+      links.set(key, course.id);
+      created++;
+    }
+    return { created, levels: mathLevels() };
   },
 
   async getSessionAttendance(ctx, sessionId) {

@@ -254,3 +254,24 @@ export interface AttendanceMark {
   status: AttendanceMarkStatus;
   note: string | null;
 }
+
+// ─── Niveles de Matemáticas (SCRUM-39) ───────────────────────────────
+
+/** Un nivel y su curso (null hasta crearlo), con cuántas de sus sesiones existen y están publicadas. */
+export interface MathLevel {
+  stage: 'primary' | 'secondary';
+  level: 'prebasic' | 'basic' | 'intermediate' | 'advanced';
+  stageLabel: string;
+  levelLabel: string;
+  sessionMinutes: number;
+  courseId: string | null;
+  courseTitle: string | null;
+  coursePublished: boolean;
+  lessons: number;
+  publishedLessons: number;
+}
+
+export interface ProvisionedLevels {
+  created: number;
+  levels: MathLevel[];
+}

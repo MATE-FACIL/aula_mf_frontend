@@ -106,3 +106,9 @@ textarea.textarea { min-height: 6rem; resize: vertical; font: inherit; }
 .formerList { color: var(--tx2); font-size: .88rem; }
 .formerList ul { margin: .3rem 0 0; padding-left: 1.1rem; }
 @media (max-width: 860px) { .rosterItem { grid-template-columns: 1fr; } }
+
+/* Niveles de Matemáticas (SCRUM-39): cuatro tarjetas por etapa; en celular, una columna. */
+.levels { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .8rem; }
+.level { display: grid; gap: .35rem; align-content: start; padding: .9rem 1rem; border: var(--borde-fino); border-radius: .9rem; background: var(--sup); }
+.level h3 { margin: 0; font-size: 1.05rem; }
+.levelMissing { border-style: dashed; color: var(--tx2); }

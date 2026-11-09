@@ -1,16 +1,16 @@
 # Pruebas del aula
 
-Resultados del 9 de noviembre de 2026 sobre el commit `e5784d3` de la rama `feat/scrum-53-55-asistencia-lecciones`. Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 9 de noviembre de 2026 sobre el último commit de la rama `feat/scrum-39-58-niveles-archivos`. Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
 | Unitarias (Vitest) | En memoria | **71 de 71**, en 15 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
-| Recorrido en navegador real | Aula conectada a la API en Docker | **31 de 31** |
+| Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
 | Sesión y renovación | Aula conectada a la API en Docker | **12 de 12** |
-| Contraste y desborde | Modo mock | 224 combinaciones: 0 problemas |
-| Flujos en celular y modo oscuro | Modo mock | **22 de 22** |
+| Contraste y desborde | Modo mock | 232 combinaciones: 0 problemas |
+| Flujos en celular y modo oscuro | Modo mock | **25 de 25** |
 
 Las dos pruebas en modo mock pasaron en Edge y en Chromium, el navegador del CI.
 
@@ -28,7 +28,7 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 
 **La sesión de administrador se firmó localmente.** Se usó la clave de desarrollo de Docker, sin pasar por el formulario de ingreso. Los logins de familia y alumno sí fueron reales, por el formulario.
 
-**Las lecciones (SCRUM-55) todavía no tienen pantalla.** Su API está lista y probada (ver las pruebas del backend); la pantalla del alumno es SCRUM-56 y la carga desde el panel es SCRUM-71.
+**Las lecciones (SCRUM-55) y sus archivos (SCRUM-58) todavía no tienen pantalla.** Su API está lista y probada (ver las pruebas del backend); la pantalla del alumno es SCRUM-56 y la carga desde el panel es SCRUM-71.
 
 **El contraste se midió solo en modo mock.** El recorrido real comprobó el desborde horizontal en celular y tablet, pero no volvió a medir el contraste.
 
@@ -90,6 +90,12 @@ Asistencia de una clase (SCRUM-53): se marca toda la lista y se guarda en un sol
 
 <img src="capturas/admin-09-asistencia-celular-oscuro.png" alt="Asistencia en celular, modo oscuro" width="280">
 
+Niveles de Matemáticas (SCRUM-39): los 8 niveles con sus 14 sesiones, y el botón para crear los que falten.
+
+![Niveles de Matemáticas](capturas/admin-10-niveles-escritorio.png)
+
+<img src="capturas/admin-11-niveles-celular-oscuro.png" alt="Niveles en celular, modo oscuro" width="280">
+
 Celular en modo oscuro:
 
 <img src="capturas/admin-07-resumen-celular-oscuro.png" alt="Resumen en celular" width="240"> <img src="capturas/admin-07-usuarios-celular-oscuro.png" alt="Usuarios en celular" width="240"> <img src="capturas/admin-07-cursos-celular-oscuro.png" alt="Cursos en celular" width="240"> <img src="capturas/admin-07-matriculas-celular-oscuro.png" alt="Matrículas en celular" width="240">
@@ -113,6 +119,7 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 - Activar matrícula actualiza la fila
 - Retirar matrícula libera el cupo
 - Asistencia: se guarda la lista y el resumen la cuenta
+- Niveles: los 8 existen, cada uno con sus sesiones
 
 ### Administración en celular
 
@@ -121,6 +128,7 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 - /admin/cursos sin desborde horizontal
 - /admin/matriculas sin desborde horizontal
 - Ficha del curso sin desborde horizontal
+- Niveles sin desborde horizontal
 - Asistencia sin desborde horizontal
 
 ### Familia
@@ -184,6 +192,9 @@ Inicio y clases en celular con modo oscuro. La clase real muestra «Entrar» cua
 - asistencia: el equipo marca la clase pasada
 - asistencia: el resumen cuenta la marca
 - sin desborde en la asistencia
+- niveles: se crean los 8 con sus 14 sesiones
+- niveles: ya no se ofrece crearlos otra vez
+- sin desborde en niveles
 - «Confirmar pago y activar» dentro de la pantalla, sin deslizar
 - activar matrícula actualiza la lista
 - retirar matrícula con confirmación
