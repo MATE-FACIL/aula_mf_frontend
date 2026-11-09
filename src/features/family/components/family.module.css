@@ -6,6 +6,7 @@
 .cardF h3 { font-size: 1rem; }
 .quote { font-size: .95rem; }
 .note { font-size: .82rem; color: var(--tx2); }
+.subTitle { font-size: 1rem; margin: 0 0 .6rem; }
 .next { font-size: .88rem; background: var(--sup2); border-radius: .55rem; padding: .5rem .7rem; }
 .tags { display: flex; flex-wrap: wrap; gap: .35rem; }
 .tags li { font-size: .78rem; font-weight: 700; background: var(--sup2); padding: .2rem .6rem; border-radius: 99px; }

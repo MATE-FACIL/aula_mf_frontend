@@ -4,13 +4,15 @@ import { httpAdmin } from './http/admin';
 import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
+import { fetchStudentAttendance } from './http/student-attendance';
 import { upcoming } from './http/live-schedule';
 import { demoUserFor, mockServices } from './mock';
 
 // Modo HÍBRIDO para probar el aula contra el backend .NET real:
 //  - Autenticación (login, sesión, logout) y panel de administración → API real
 //    (API_BASE_URL, ej.: http://localhost:5087/api/v1).
-//  - Clases en vivo y calendario del alumno, e hijos de la familia → API real (SCRUM-50/51/52 y 67).
+//  - Clases en vivo, calendario y asistencia del alumno, e hijos de la familia con su asistencia → API real
+//    (SCRUM-50/51/52, 53 y 67).
 //  - El resto de lo que ven el alumno y la familia (lecciones, tareas, tutor…) → datos mock, porque el
 //    backend aún no tiene esos módulos.
 //
@@ -46,9 +48,10 @@ export const hybridServices: Services = {
   assessments: withDemoUser(mockServices.assessments),
   schedule: {
     ...demoSchedule,
+    // Clases y asistencia reales (SCRUM-50/53) junto a las tareas de ejemplo: tres fuentes, una sola espera.
     async getSchedule(ctx) {
-      const [demo, live] = await Promise.all([demoSchedule.getSchedule(ctx), fetchLiveSchedule(ctx)]);
-      return { ...demo, ...live };
+      const [demo, live, attendance] = await Promise.all([demoSchedule.getSchedule(ctx), fetchLiveSchedule(ctx), fetchStudentAttendance(ctx)]);
+      return { ...demo, ...live, attendance: attendance.records, attendanceSummary: attendance.summary };
     },
   },
   // Hijos reales del padre (sin datos de ejemplo mezclados: serían de otro niño).

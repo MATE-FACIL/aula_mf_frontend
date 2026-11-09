@@ -118,7 +118,7 @@ async function discover(role, context) {
   const guardianId = await find('/admin/familias', /href="\/admin\/usuarios\/([0-9a-f-]{36})"/);
   await page.close();
   return ['/admin', '/admin/usuarios', '/admin/usuarios/nuevo', `/admin/usuarios/${userId}`, `/admin/usuarios/${guardianId}?buscar=a`, '/admin/familias', '/admin/matriculas',
-    '/admin/cursos', '/admin/cursos/nuevo', `/admin/cursos/${courseId}`, `/admin/cursos/${courseId}/grupos/nuevo`, `/admin/cursos/${courseId}/grupos/${groupId}`, '/admin/categorias'];
+    '/admin/cursos', '/admin/cursos/niveles', '/admin/cursos/nuevo', `/admin/cursos/${courseId}`, `/admin/cursos/${courseId}/grupos/nuevo`, `/admin/cursos/${courseId}/grupos/${groupId}`, '/admin/categorias'];
 }
 
 const login = await browser.newContext();

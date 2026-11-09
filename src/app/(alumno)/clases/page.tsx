@@ -41,7 +41,7 @@ async function ClassesContent() {
           <h2>Clases en vivo</h2>
           <LiveClassesSection classes={schedule.classes} timeZone={tz} now={ctx.requestedAt} />
           <h2>Asistencia</h2>
-          <AttendanceList records={schedule.attendance} />
+          <AttendanceList records={schedule.attendance} summary={schedule.attendanceSummary} />
         </section>
       </div>
     </>

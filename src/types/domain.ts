@@ -241,6 +241,15 @@ export interface AttendanceRecord {
   note?: string;
 }
 
+/** Totales de todas las clases marcadas (la lista solo trae las más recientes). rate: % asistidas (tarde cuenta), null sin clases. */
+export interface AttendanceSummary {
+  present: number;
+  late: number;
+  absent: number;
+  total: number;
+  rate: number | null;
+}
+
 // ─── Logros ────────────────────────────────────────────────────────────
 
 export interface Badge {
@@ -329,6 +338,8 @@ export interface ChildOverview {
   report: WeeklyReport | null;
   evaluations: EvaluationSummary[];
   attendance: AttendanceRecord[];
+  /** Totales reales del backend; null en datos de ejemplo (se calculan de la lista). */
+  attendanceSummary: AttendanceSummary | null;
   portfolio: PortfolioItem[];
   certificates: Certificate[];
   badges: Badge[];

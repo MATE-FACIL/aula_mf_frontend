@@ -221,3 +221,57 @@ export interface CreatedInstructor {
   loginIdentifier: string;
   initialPassword: string;
 }
+
+// ─── Asistencia (SCRUM-53) ───────────────────────────────────────────
+
+export type AttendanceMarkStatus = 'present' | 'late' | 'absent';
+
+/** Un alumno en la lista de una clase. status null: sin marcar. enrolled false: dejó el grupo (se conserva su historial). */
+export interface SessionAttendanceStudent {
+  studentUserId: string;
+  fullName: string;
+  status: AttendanceMarkStatus | null;
+  note: string | null;
+  recordedAt: string | null;
+  enrolled: boolean;
+}
+
+export interface SessionAttendance {
+  sessionId: string;
+  offeringId: string;
+  courseTitle: string;
+  offeringName: string;
+  startsAt: string;
+  endsAt: string;
+  /** La asistencia se abre poco antes de empezar la clase. */
+  opensAt: string;
+  canMark: boolean;
+  students: SessionAttendanceStudent[];
+}
+
+export interface AttendanceMark {
+  studentUserId: string;
+  status: AttendanceMarkStatus;
+  note: string | null;
+}
+
+// ─── Niveles de Matemáticas (SCRUM-39) ───────────────────────────────
+
+/** Un nivel y su curso (null hasta crearlo), con cuántas de sus sesiones existen y están publicadas. */
+export interface MathLevel {
+  stage: 'primary' | 'secondary';
+  level: 'prebasic' | 'basic' | 'intermediate' | 'advanced';
+  stageLabel: string;
+  levelLabel: string;
+  sessionMinutes: number;
+  courseId: string | null;
+  courseTitle: string | null;
+  coursePublished: boolean;
+  lessons: number;
+  publishedLessons: number;
+}
+
+export interface ProvisionedLevels {
+  created: number;
+  levels: MathLevel[];
+}

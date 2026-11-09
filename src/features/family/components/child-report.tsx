@@ -23,12 +23,16 @@ export function ChildReport({ child, messages, membership, timeZone }: Props) {
   const { profile, report } = child;
   const classes = <ChildClasses child={child} timeZone={timeZone} />;
 
-  // Hijo real: el backend aún no tiene notas, asistencia ni proyectos. Se muestra lo que existe, sin inventar datos.
+  // Hijo real: el backend aún no tiene notas ni proyectos. Se muestra lo que existe (clases y asistencia), sin inventar datos.
   if (!profile) {
     return (
       <div className={styles.section}>
         {classes}
-        <p className={styles.note}>Las notas, la asistencia y los proyectos aparecerán aquí cuando empiecen las clases.</p>
+        <section aria-labelledby={`asistencia-${child.id}`}>
+          <h3 id={`asistencia-${child.id}`} className={styles.subTitle}>Asistencia</h3>
+          <AttendanceList records={child.attendance} summary={child.attendanceSummary} />
+        </section>
+        <p className={styles.note}>Las notas y los proyectos aparecerán aquí cuando empiecen las evaluaciones.</p>
       </div>
     );
   }
@@ -114,7 +118,7 @@ export function ChildReport({ child, messages, membership, timeZone }: Props) {
             </div>
           ),
         },
-        { id: 'asistencia', label: 'Asistencia', panel: <AttendanceList records={child.attendance} /> },
+        { id: 'asistencia', label: 'Asistencia', panel: <AttendanceList records={child.attendance} summary={child.attendanceSummary} /> },
         {
           id: 'proyectos',
           label: 'Proyectos',

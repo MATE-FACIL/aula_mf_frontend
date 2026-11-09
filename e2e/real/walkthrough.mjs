@@ -2,7 +2,7 @@
 // Con E2E_VIDEO=1 también graba cada recorrido.
 import { mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
-import { base, check as report, finish, launch, noHorizontalScroll, output, realApi, seedCourse, settled } from '../lib.mjs';
+import { base, check as report, finish, launch, noHorizontalScroll, output, realApi, seedCourse, settled, waitForText } from '../lib.mjs';
 
 const videos = join(output, 'video');
 mkdirSync(videos, { recursive: true });
@@ -122,6 +122,31 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   await page.getByRole('row').filter({ hasText: `Carla Mamani ${tag}` }).getByRole('button', { name: 'Retirar' }).click();
   await page.getByText('el cupo quedó libre').waitFor({ timeout: 10000 });
   check('Admin', 'Retirar matrícula libera el cupo', true);
+
+  // Asistencia de la clase de hoy (empieza en 5 min: ya está abierta). Ana asistió, Bruno llegó tarde.
+  await page.goto(`${base}/admin/cursos/${course.id}/grupos/${offering.id}`, { waitUntil: 'networkidle' });
+  await page.getByRole('link', { name: 'Asistencia', exact: true }).first().click();
+  await page.getByRole('heading', { name: /Asistencia · clase 1/ }).waitFor({ timeout: 10000 });
+  await page.getByRole('group', { name: new RegExp(`Ana Quispe ${tag}`) }).getByLabel('Asistió').check();
+  await page.getByRole('group', { name: new RegExp(`Bruno Rojas ${tag}`) }).getByLabel('Tarde').check();
+  await page.getByLabel(new RegExp(`Nota sobre Bruno Rojas ${tag}`)).fill('Entró 10 min tarde');
+  await page.getByRole('button', { name: 'Guardar asistencia' }).click();
+  await page.getByText('Asistencia guardada (2 alumnos).').waitFor({ timeout: 10000 });
+  const summary = await waitForText(page.getByLabel('Resumen de la clase'), (text) => /Asistió\s*1/.test(text) && /Tarde\s*1/.test(text));
+  check('Admin', 'Asistencia: se guarda la lista y el resumen la cuenta', /Asistió\s*1/.test(summary) && /Tarde\s*1/.test(summary), summary);
+  await shot(page, 'admin-08-asistencia-escritorio');
+
+  // Niveles de Matemáticas (SCRUM-39): si faltan se crean; en cualquier caso quedan los 8 con sus sesiones.
+  await page.goto(`${base}/admin/cursos/niveles`, { waitUntil: 'networkidle' });
+  await settled(page);
+  const provision = page.getByRole('button', { name: 'Crear los niveles que faltan' });
+  if (await provision.isVisible()) {
+    await provision.click();
+    await page.getByText(/Se crearon \d+ nivel/).waitFor({ timeout: 10000 });
+  }
+  const levelsText = await waitForText(page.getByRole('main'), (text) => (text.match(/\d+ sesiones ·/g) ?? []).length === 8);
+  check('Admin', 'Niveles: los 8 existen, cada uno con sus sesiones', (levelsText.match(/\d+ sesiones ·/g) ?? []).length === 8, levelsText.slice(0, 200));
+  await shot(page, 'admin-10-niveles-escritorio');
   await closeSession(s, 'admin-escritorio');
 }
 
@@ -140,6 +165,14 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   await page.waitForURL(/\/admin\/cursos\/[0-9a-f-]{36}/);
   await page.waitForLoadState('networkidle');
   check('Admin celular', 'Ficha del curso sin desborde horizontal', await noScroll(page));
+  await page.goto(`${base}/admin/cursos/niveles`, { waitUntil: 'networkidle' });
+  check('Admin celular', 'Niveles sin desborde horizontal', await noScroll(page));
+  await shot(page, 'admin-11-niveles-celular-oscuro', false);
+  await page.goto(`${base}/admin/cursos/${course.id}/grupos/${offering.id}`, { waitUntil: 'networkidle' });
+  await page.getByRole('link', { name: 'Asistencia', exact: true }).first().click();
+  await page.getByRole('heading', { name: /Asistencia · clase 1/ }).waitFor({ timeout: 10000 });
+  check('Admin celular', 'Asistencia sin desborde horizontal', await noScroll(page));
+  await shot(page, 'admin-09-asistencia-celular-oscuro');
   await closeSession(s, 'admin-celular');
 }
 
@@ -162,6 +195,7 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   check('Familia', 'La contraseña no queda escrita en la página oculta', !(await keepsPassword(page, guardian.initialPassword)));
   check('Familia', 'Se ve a la hija con su curso y profesora reales', (await text()).includes(courseTitle) && (await text()).includes(`Lucía Paredes ${tag}`));
   check('Familia', 'No aparecen datos de ejemplo', !/Valentina|Mateo/.test(await text()));
+  check('Familia', 'Ve la asistencia real de su hija', (await text()).includes('1 de 1 clases'));
   await shot(page, 'familia-02-hija-activa-escritorio');
   const other = page.getByRole('tab', { name: /Luis/ }).or(page.getByRole('button', { name: /Luis/ })).or(page.getByRole('link', { name: /Luis/ })).first();
   await other.click();
@@ -201,6 +235,7 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   check('Alumno', '/clases muestra el curso real', html.includes(courseTitle));
   check('Alumno', 'La clase próxima ofrece «Entrar» con su enlace', await page.locator('a[href="https://meet.example.com/geometria"]').first().isVisible());
   check('Alumno', '/clases sin desborde horizontal', await noScroll(page));
+  check('Alumno', '/clases muestra su asistencia real', (await page.locator('#contenido').innerText()).includes('1 de 1 clases'));
   await page.locator('a[href="https://meet.example.com/geometria"]').first().scrollIntoViewIfNeeded();
   await shot(page, 'alumno-02-clases-celular-oscuro', false);
   await closeSession(s, 'alumno-celular');

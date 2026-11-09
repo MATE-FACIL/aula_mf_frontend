@@ -88,3 +88,27 @@ textarea.textarea { min-height: 6rem; resize: vertical; font: inherit; }
 .seatCard { display: grid; gap: .3rem; text-decoration: none; color: inherit; }
 .seatCard:hover, .seatCard[aria-current='true'] { box-shadow: var(--sombra-sm); border-color: var(--acento); }
 .seatCard .badge { justify-self: start; }
+
+/* Asistencia de una clase (SCRUM-53): una fila por alumno; en celular, tarjeta con las opciones debajo. */
+.counts { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; margin: 0 0 1rem; color: var(--tx2); font-weight: 700; }
+.counts b { color: var(--tx); font-size: 1.1rem; }
+.roster { display: grid; gap: 1rem; }
+.rosterList { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.rosterItem { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem); gap: .6rem 1rem; align-items: center; padding: .7rem .8rem; border: var(--borde-fino); border-radius: .8rem; background: var(--sup); }
+.choices { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.rosterName { float: left; width: 100%; margin-bottom: .2rem; font-weight: 800; color: var(--tx); padding: 0; }
+.choice { display: inline-flex; align-items: center; gap: .35rem; min-height: 2.5rem; padding: .3rem .8rem; border: var(--borde-fino); border-radius: 99px; font-weight: 700; cursor: pointer; background: var(--sup); color: var(--tx); }
+.choice input { accent-color: var(--tx); }
+.choice_present:has(input:checked) { background: color-mix(in srgb, var(--ok) 22%, var(--sup)); border-color: var(--ok); }
+.choice_late:has(input:checked) { background: var(--aviso-fondo); color: var(--aviso); border-color: var(--aviso); }
+.choice_absent:has(input:checked) { background: color-mix(in srgb, var(--error) 18%, var(--sup)); border-color: var(--error); }
+.choice:has(input:focus-visible) { outline: 3px solid var(--acento); outline-offset: 2px; }
+.formerList { color: var(--tx2); font-size: .88rem; }
+.formerList ul { margin: .3rem 0 0; padding-left: 1.1rem; }
+@media (max-width: 860px) { .rosterItem { grid-template-columns: 1fr; } }
+
+/* Niveles de Matemáticas (SCRUM-39): cuatro tarjetas por etapa; en celular, una columna. */
+.levels { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .8rem; }
+.level { display: grid; gap: .35rem; align-content: start; padding: .9rem 1rem; border: var(--borde-fino); border-radius: .9rem; background: var(--sup); }
+.level h3 { margin: 0; font-size: 1.05rem; }
+.levelMissing { border-style: dashed; color: var(--tx2); }

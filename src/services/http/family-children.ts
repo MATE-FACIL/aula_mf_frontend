@@ -1,4 +1,5 @@
 import type { ChildOverview } from '@/types/domain';
+import type { StudentAttendance } from './attendance';
 import { toLiveClass, type StudentClassDto } from './live-schedule';
 
 // Hijos reales de la familia (SCRUM-67): conversión de `GET /families/me/children`.
@@ -19,8 +20,8 @@ export interface FamilyChildDto {
   upcomingClasses: StudentClassDto[];
 }
 
-/** Lo que el backend aún no tiene (perfil, notas, asistencia…) queda vacío: nunca se rellena con ejemplos. */
-export function toChildOverview(dto: FamilyChildDto): ChildOverview {
+/** Lo que el backend aún no tiene (perfil, notas, proyectos…) queda vacío: nunca se rellena con ejemplos. */
+export function toChildOverview(dto: FamilyChildDto, attendance?: StudentAttendance): ChildOverview {
   return {
     id: dto.studentUserId,
     displayName: dto.fullName,
@@ -29,7 +30,8 @@ export function toChildOverview(dto: FamilyChildDto): ChildOverview {
     profile: null,
     report: null,
     evaluations: [],
-    attendance: [],
+    attendance: attendance?.records ?? [],
+    attendanceSummary: attendance?.summary ?? null,
     portfolio: [],
     certificates: [],
     badges: [],

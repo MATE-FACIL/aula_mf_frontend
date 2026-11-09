@@ -36,6 +36,19 @@ export const settled = (page) => page.waitForFunction(
   () => ![...document.querySelectorAll('.skeleton, [aria-busy="true"]')].some((el) => el.offsetParent !== null),
   undefined, { timeout: 15000 },
 );
+/** Espera (hasta 8 s) a que el texto visible de `locator` cumpla `test`; devuelve el último texto leído. */
+export async function waitForText(locator, test, timeout = 8000) {
+  const visible = locator.filter({ visible: true });
+  const until = Date.now() + timeout;
+  let text = '';
+  while (Date.now() < until) {
+    text = await visible.innerText().catch(() => '');
+    if (test(text)) return text;
+    await new Promise((done) => setTimeout(done, 200));
+  }
+  return text;
+}
+
 export const noHorizontalScroll = async (page) => {
   await settled(page);
   return page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);

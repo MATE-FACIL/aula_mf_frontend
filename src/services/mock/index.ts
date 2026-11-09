@@ -308,7 +308,7 @@ export const mockServices: Services = {
     async getSchedule(ctx) {
       requireRole(ctx, 'student');
       await delay();
-      return { ...buildSchedule(ctx.user.timeZone), tasks: store().tasks, attendance: data.attendance, materials: data.mathLesson.materials };
+      return { ...buildSchedule(ctx.user.timeZone), tasks: store().tasks, attendance: data.attendance, attendanceSummary: null, materials: data.mathLesson.materials };
     },
     async submitTask(ctx, taskId) {
       requireRole(ctx, 'student');
@@ -335,6 +335,7 @@ export const mockServices: Services = {
         report: data.weeklyReport,
         evaluations,
         attendance: data.attendance,
+        attendanceSummary: null,
         portfolio: data.portfolio,
         certificates: data.certificates,
         badges: data.badges,
@@ -349,6 +350,7 @@ export const mockServices: Services = {
         report: null,
         evaluations: [],
         attendance: data.siblingAttendance,
+        attendanceSummary: null,
         portfolio: [],
         certificates: [],
         badges: [],
