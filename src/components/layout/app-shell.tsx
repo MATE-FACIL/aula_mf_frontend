@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from 'react';
 import { Logo } from '@/components/brand/logo';
-import { ADMIN_NAV, STUDENT_NAV, type NavItem } from '@/config/navigation';
+import { ADMIN_NAV, STUDENT_NAV, TEACHER_NAV, type NavItem } from '@/config/navigation';
 import { cn } from '@/lib/cn';
 import { OfflineBanner } from '@/features/pwa/offline-banner';
 import { ThemeToggle } from '@/features/theme/theme-toggle';
@@ -10,7 +10,7 @@ import { SideNav, SideNavFallback } from './side-nav';
 // Armazón estático del aula: se prerenderiza y llega al instante.
 // La parte que depende de la sesión (estrellas, avisos, perfil) entra por `status` dentro de un <Suspense>.
 
-type Area = 'student' | 'family' | 'admin';
+type Area = 'student' | 'family' | 'teacher' | 'admin';
 
 interface Props {
   area: Area;
@@ -21,6 +21,7 @@ interface Props {
 const AREAS: Record<Area, { home: string; label: string; nav?: NavItem[] }> = {
   student: { home: '/inicio', label: 'Alumno', nav: STUDENT_NAV },
   family: { home: '/familia', label: 'Familia' },
+  teacher: { home: '/profesor', label: 'Profesor', nav: TEACHER_NAV },
   admin: { home: '/admin', label: 'Administración', nav: ADMIN_NAV },
 };
 

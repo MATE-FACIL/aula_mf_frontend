@@ -1,6 +1,6 @@
 # Lista de pruebas unitarias
 
-Las 71 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
+Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 
 ## `src/app/manifest.test.ts` (6)
 
@@ -53,6 +53,16 @@ Las 71 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - parseOfferingForm → arma el grupo con la cantidad de clases del horario
 - parseOfferingForm → rechaza horarios mal formados, enlaces no http y cupos inválidos
 
+## `src/features/practice/answer.test.ts` (7)
+
+- answerFormatError → opción múltiple: solo un índice de las opciones
+- answerFormatError → numérica: acepta coma o punto decimal y signo, como el backend
+- answerFormatError → numérica: rechaza texto, fracciones, miles y respuestas largas sin gastar una petición
+- firstPending → retoma en el primer ejercicio sin resolver
+- firstPending → si ya resolvió todos, empieza por el primero
+- progressLabel → cuenta resueltos y porcentaje
+- progressLabel → sin ejercicios no muestra 0 %
+
 ## `src/lib/math/fractions.test.ts` (5)
 
 - fracciones → calcula el máximo común divisor
@@ -102,6 +112,14 @@ Las 71 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - rango y calendario → cada clase es un evento del día local
 - rango y calendario → «Inicio» muestra solo las que aún no terminan
 
+## `src/services/http/practice.test.ts` (5)
+
+- toPracticeCourse → une el curso con su avance y arma el rótulo del nivel
+- toPracticeCourse → un curso que no es nivel, o sin avance disponible, sigue apareciendo vacío
+- uniqueCourses → el mismo curso por dos grupos se muestra una sola vez (y no se pide dos veces)
+- roleFromBackend → el profesor (instructor) entra a su área
+- roleFromBackend → gana el rol de más alcance
+
 ## `src/services/mock/grading.test.ts` (6)
 
 - estrellas de la práctica → da 3 al primer intento sin pistas y nunca menos de 1
@@ -110,6 +128,15 @@ Las 71 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - checkFractionAnswer → tras 2 intentos sugiere pedir pista
 - gradeQuiz → califica y agrupa por competencia
 - gradeQuiz → marca el envío tardío
+
+## `src/services/mock/practice.test.ts` (6)
+
+- checkPracticeAnswer → corrige opción múltiple por índice y numéricas con coma o punto
+- checkPracticeAnswer → una respuesta ilegible no es ni buena ni mala
+- mockPractice → el alumno no recibe la respuesta ni la explicación antes de responder
+- mockPractice → responde, explica y recalcula el avance; un error y luego el acierto cuentan un resuelto
+- mockPractice → una respuesta ilegible es 400 y no se guarda
+- mockPractice → solo el alumno practica
 
 ## `src/services/mock/tutor-engine.test.ts` (4)
 

@@ -20,6 +20,10 @@ export const STUDENT_NAV: NavItem[] = [
   { href: '/logros', label: 'Logros', icon: 'trophy' },
 ];
 
+export const TEACHER_NAV: NavItem[] = [
+  { href: '/profesor', label: 'Mis grupos', short: 'Grupos', icon: 'courses' },
+];
+
 export const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Resumen', icon: 'dashboard', exact: true },
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },

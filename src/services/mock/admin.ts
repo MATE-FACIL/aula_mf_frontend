@@ -7,6 +7,7 @@ import type {
   AdminLinkedUser,
   AdminUserDetail,
   AdminUserListItem,
+  AttendanceMark,
   AttendanceMarkStatus,
   BackendRole,
   CourseCategory,
@@ -21,7 +22,9 @@ import type {
   SessionAttendance,
   SessionAttendanceStudent,
 } from '@/types/admin';
-import type { AdminService, RequestContext } from '../contracts';
+import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
+import type { AdminService, RequestContext, TeacherService } from '../contracts';
+import { practiceProgressOf } from './practice';
 
 // Panel de administración EN MEMORIA (modo mock). Imita las reglas del backend .NET:
 // paginación y filtros, usuario del alumno = inicial del primer apellido + documento,
@@ -256,6 +259,22 @@ function sessionAttendance(sessionId: string): SessionAttendance | null {
     sessionId, offeringId: offering.id, courseTitle: course?.title ?? '', offeringName: offering.name,
     startsAt: session.startsAt, endsAt: session.endsAt, opensAt, canMark: Date.now() >= Date.parse(opensAt), students,
   };
+}
+
+/** Guarda la lista completa de una clase, con las mismas reglas que el backend. */
+function saveMarks(sessionId: string, records: AttendanceMark[]): SessionAttendance {
+  const view = sessionAttendance(sessionId);
+  if (!view) throw new ApiError('not_found', 'Clase', 404, undefined, 'No encontramos esa clase.');
+  if (!view.canMark) throw new ApiError('conflict', 'Cerrada', 409, undefined, 'Todavía no empieza la clase: la asistencia se abre 15 minutos antes.');
+  const enrolled = new Set(view.students.filter((s) => s.enrolled).map((s) => s.studentUserId));
+  if (records.some((r) => !enrolled.has(r.studentUserId))) {
+    throw new ApiError('validation', 'Fuera del grupo', 400, undefined, 'Solo se puede marcar a alumnos con matrícula activa en este grupo.');
+  }
+  const marks = attendanceStore().get(sessionId) ?? new Map();
+  const now = new Date().toISOString();
+  for (const r of records) marks.set(r.studentUserId, { status: r.status, note: r.note?.trim() || null, recordedAt: now });
+  attendanceStore().set(sessionId, marks);
+  return sessionAttendance(sessionId)!;
 }
 
 // Niveles de Matemáticas (SCRUM-39): nivel → curso. Cada nivel creado trae sus 14 sesiones en borrador.
@@ -681,18 +700,7 @@ export const mockAdmin: AdminService = {
   async markAttendance(ctx, sessionId, records) {
     requireAdmin(ctx);
     await delay();
-    const view = sessionAttendance(sessionId);
-    if (!view) throw new ApiError('not_found', 'Clase', 404, undefined, 'No encontramos esa clase.');
-    if (!view.canMark) throw new ApiError('conflict', 'Cerrada', 409, undefined, 'Todavía no empieza la clase: la asistencia se abre 15 minutos antes.');
-    const enrolled = new Set(view.students.filter((s) => s.enrolled).map((s) => s.studentUserId));
-    if (records.some((r) => !enrolled.has(r.studentUserId))) {
-      throw new ApiError('validation', 'Fuera del grupo', 400, undefined, 'Solo se puede marcar a alumnos con matrícula activa en este grupo.');
-    }
-    const marks = attendanceStore().get(sessionId) ?? new Map();
-    const now = new Date().toISOString();
-    for (const r of records) marks.set(r.studentUserId, { status: r.status, note: r.note?.trim() || null, recordedAt: now });
-    attendanceStore().set(sessionId, marks);
-    return sessionAttendance(sessionId)!;
+    return saveMarks(sessionId, records);
   },
 
   async listInstructors(ctx) {
@@ -713,5 +721,119 @@ export const mockAdmin: AdminService = {
     const instructor = { id: randomUUID(), fullName: [input.givenNames, input.firstSurname, input.secondSurname].filter(Boolean).join(' '), email };
     enrollmentStore().instructors.push(instructor);
     return { instructorId: instructor.id, userId: randomUUID(), loginIdentifier: email, initialPassword: newPassword() };
+  },
+};
+
+// ─── Panel del profesor (SCRUM-69/70) ──────────────────────────────────
+// La cuenta demo del profesor es la de Lucía Paredes: ve solo los grupos donde está asignada.
+
+export const DEMO_TEACHER_EMAIL = 'lucia@matefacil.pe';
+
+function requireTeacher(ctx: RequestContext) {
+  if (ctx.user.role !== 'teacher') throw new ApiError('forbidden', 'Se requiere el rol teacher', 403);
+  const me = enrollmentStore().instructors.find((i) => i.email === DEMO_TEACHER_EMAIL);
+  if (!me) throw new ApiError('forbidden', 'Sin profesor', 403);
+  return me;
+}
+
+const myOfferings = (instructorId: string) => enrollmentStore().offerings.filter((o) => o.instructorIds.includes(instructorId));
+
+const activeStudentIds = (offeringId: string) => enrollmentStore().enrollments
+  .filter((e) => e.courseOfferingId === offeringId && e.status === 'active').map((e) => e.studentUserId);
+
+const byStart = <T extends { startsAt: string }>(list: T[]) => [...list].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+
+function toTeacherGroup(o: MockOffering): TeacherGroup {
+  const course = store().courses.find((c) => c.id === o.courseId);
+  const now = Date.now();
+  const next = byStart(o.sessions).find((s) => Date.parse(s.endsAt) > now) ?? null;
+  return {
+    offeringId: o.id, courseId: o.courseId, courseTitle: course?.title ?? '', offeringName: o.name,
+    isPublished: o.status === 'published', activeStudents: activeStudentIds(o.id).length, maximumCapacity: o.maximumCapacity,
+    sessions: o.sessions.length, nextSessionId: next?.id ?? null, nextSessionStartsAt: next?.startsAt ?? null,
+  };
+}
+
+/** La demo del alumno (Valentina) es la única con práctica: su avance se muestra en su fila. */
+const demoPracticeOf = (person: Person) => practiceProgressOf(person.givenNames === 'Valentina' ? 'stu-valentina' : person.id);
+
+function countMarks(statuses: (AttendanceMarkStatus | undefined)[]) {
+  const count = (status: AttendanceMarkStatus) => statuses.filter((x) => x === status).length;
+  return { present: count('present'), late: count('late'), absent: count('absent') };
+}
+
+/** La clase, si es de un grupo del profesor. Una clase ajena es 403, como en el backend. */
+function teacherSession(ctx: RequestContext, sessionId: string): SessionAttendance | null {
+  const me = requireTeacher(ctx);
+  const offering = enrollmentStore().offerings.find((o) => o.sessions.some((s) => s.id === sessionId));
+  if (!offering) return null;
+  if (!offering.instructorIds.includes(me.id)) throw new ApiError('forbidden', 'Ajeno', 403, undefined, 'Esta clase no es de uno de tus grupos.');
+  return sessionAttendance(sessionId);
+}
+
+function requireTeacherSession(ctx: RequestContext, sessionId: string): SessionAttendance {
+  const view = teacherSession(ctx, sessionId);
+  if (!view) throw new ApiError('not_found', 'Clase', 404, undefined, 'No encontramos esa clase.');
+  return view;
+}
+
+export const mockTeacher: TeacherService = {
+  async listGroups(ctx) {
+    const me = requireTeacher(ctx);
+    await delay();
+    return myOfferings(me.id).map(toTeacherGroup);
+  },
+
+  async getGroup(ctx, offeringId): Promise<TeacherGroupDetail | null> {
+    const me = requireTeacher(ctx);
+    await delay();
+    const offering = myOfferings(me.id).find((o) => o.id === offeringId);
+    if (!offering) return null;
+    const sessions = byStart(offering.sessions).map((s, index) => {
+      const counts = countMarks([...(attendanceStore().get(s.id)?.values() ?? [])].map((m) => m.status));
+      return {
+        sessionId: s.id, number: index + 1, startsAt: s.startsAt, endsAt: s.endsAt, virtualLink: s.virtualLink ?? null,
+        ...counts, marked: counts.present + counts.late + counts.absent,
+      };
+    });
+    const students = activeStudentIds(offering.id)
+      .map((id) => store().people.find((p) => p.id === id))
+      .filter((p): p is Person => Boolean(p))
+      .map((p) => {
+        const counts = countMarks(offering.sessions.map((s) => attendanceStore().get(s.id)?.get(p.id)?.status));
+        const total = counts.present + counts.late + counts.absent;
+        return {
+          studentUserId: p.id,
+          fullName: fullName(p),
+          attendance: { ...counts, total, rate: total === 0 ? null : Math.round(((counts.present + counts.late) * 100) / total) },
+          practice: demoPracticeOf(p),
+        };
+      })
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'));
+    return { group: toTeacherGroup(offering), sessions, students };
+  },
+
+  async getSessionAttendance(ctx, sessionId) {
+    await delay();
+    // Como el servicio HTTP: la clase de otro profesor se muestra como «no encontrada».
+    try {
+      return teacherSession(ctx, sessionId);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'forbidden') return null;
+      throw error;
+    }
+  },
+
+  async markAttendance(ctx, sessionId, records) {
+    await delay();
+    requireTeacherSession(ctx, sessionId);
+    return saveMarks(sessionId, records);
+  },
+
+  async markRemainingPresent(ctx, sessionId) {
+    await delay();
+    const view = requireTeacherSession(ctx, sessionId);
+    const pending = view.students.filter((s) => s.enrolled && !s.status);
+    return saveMarks(sessionId, pending.map((s) => ({ studentUserId: s.studentUserId, status: 'present' as const, note: null })));
   },
 };

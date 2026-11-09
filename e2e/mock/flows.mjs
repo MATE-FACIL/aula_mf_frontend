@@ -160,6 +160,92 @@ const draftOption = page.locator('select[name="courseOfferingId"] option', { has
 await draftOption.waitFor({ state: 'attached', timeout: 8000 });
 check('matricular: el grupo en borrador aparece deshabilitado', await draftOption.evaluate((option) => option.disabled));
 
+// 9) Práctica del alumno en el celular (SCRUM-61): error con explicación, acierto, formato inválido sin gastar intento
+const studentPage = await (async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ctx.addCookies([{ name: 'mf_session', value: mockToken('stu-valentina', 'student'), url: base }, { name: 'mf_role', value: 'student', url: base }]);
+  const p = await ctx.newPage();
+  p.on('pageerror', (e) => errors.push(e.message));
+  return p;
+})();
+await studentPage.goto(`${base}/lecciones`, { waitUntil: 'networkidle' });
+await studentPage.getByRole('link', { name: 'Mis prácticas' }).click();
+await studentPage.waitForURL(/\/lecciones\/practica$/);
+const lessonLink = studentPage.getByRole('link', { name: /Sumar fracciones/ }).filter({ visible: true }).first();
+await lessonLink.waitFor({ timeout: 8000 });
+check('mis prácticas lista las lecciones con su avance', await studentPage.getByText(/de 3 resueltos|Sin ejercicios|de 3 resuelto/).first().isVisible());
+await lessonLink.click();
+await studentPage.waitForURL(/\/lecciones\/practica\/[0-9a-f-]{36}/);
+const runner = studentPage.locator('section[aria-labelledby="practice-title"]').filter({ visible: true });
+await runner.getByRole('button', { name: /^Ejercicio 1\b/ }).click();
+await runner.getByText('¿Cuánto es 1/2 + 1/4?').waitFor({ timeout: 8000 });
+// Se pide la página otra vez (HTML + datos de React): las rutas visitadas antes siguen en el DOM y tienen otros textos.
+const raw = await (await studentPage.request.get(studentPage.url())).text();
+check('el navegador no recibe la respuesta ni la explicación antes de responder', raw.includes('¿Cuánto es 1/2 + 1/4?') && !/correctOption|correctNumber|denominador común/i.test(raw));
+await runner.getByLabel('2/6').check();
+await runner.getByRole('button', { name: 'Comprobar' }).click();
+const wrongText = await waitForText(runner.locator('[aria-live="polite"]').last(), (t) => t.includes('Todavía no'));
+check('respuesta incorrecta: lo dice y muestra la explicación', wrongText.includes('Todavía no') && /denominador común/.test(await runner.innerText()), wrongText);
+await runner.getByLabel('3/4').check();
+await runner.getByRole('button', { name: 'Comprobar' }).click();
+await waitForText(runner.locator('[aria-live="polite"]').last(), (t) => t.includes('Correcto'));
+check('respuesta correcta: ¡Correcto! y botón para seguir', await runner.getByRole('button', { name: 'Siguiente ejercicio →' }).isVisible());
+await runner.getByRole('button', { name: 'Siguiente ejercicio →' }).click();
+const answer = runner.getByLabel('¿Cuánto es 1/4 + 1/4 en decimal?');
+await answer.fill('medio');
+await runner.getByRole('button', { name: 'Comprobar' }).click();
+check('formato inválido: se avisa sin enviar', (await waitForText(runner.locator('[aria-live="polite"]').last(), (t) => t.includes('Escribe un número'))).includes('Escribe un número'));
+await answer.fill('0,5');
+await runner.getByRole('button', { name: 'Comprobar' }).click();
+await waitForText(runner.locator('[aria-live="polite"]').last(), (t) => t.includes('Correcto'));
+const progressText = await runner.locator('header p').innerText();
+check('el avance de la lección sube con cada acierto', /^[23] de 3 resueltos/.test(progressText), progressText);
+await studentPage.screenshot({ path: join(output, 'practica-celular.png'), fullPage: true });
+check('práctica sin desborde en el celular', await noHorizontalScroll(studentPage));
+await studentPage.context().close();
+
+// 10) Profesora en tableta (SCRUM-70): entra por «Equipo», ve sus grupos, toma asistencia en un clic
+const teacherContext = await browser.newContext({ viewport: { width: 768, height: 1024 }, hasTouch: true });
+const teacher = await teacherContext.newPage();
+teacher.on('pageerror', (e) => errors.push(e.message));
+await teacher.goto(`${base}/ingreso`, { waitUntil: 'networkidle' });
+await teacher.getByRole('tab', { name: 'Equipo' }).click();
+const staffForm = teacher.locator('form:visible');
+await staffForm.locator('input[name="email"]').fill('lucia@matefacil.pe');
+await staffForm.locator('input[name="password"]').fill('matefacil123');
+await staffForm.getByRole('button', { name: 'Entrar al panel' }).click();
+await teacher.waitForURL(/\/profesor$/, { timeout: 10000 });
+const cards = teacher.locator('a[href^="/profesor/grupos/"]').filter({ visible: true });
+await cards.first().waitFor({ timeout: 8000 });
+// Sus dos grupos de la demo (más el que el flujo 4 le asignó); nunca el del laboratorio, que no es suyo.
+const cardText = (await cards.allInnerTexts()).join(' | ');
+check('la profesora entra a su área y ve solo sus grupos', cardText.includes('Grupo A') && cardText.includes('Grupo B') && !cardText.includes('Grupo único'), cardText);
+await cards.filter({ hasText: 'Grupo A' }).click();
+await teacher.waitForURL(/\/profesor\/grupos\/[0-9a-f-]{36}$/);
+await teacher.getByRole('heading', { name: 'Alumnos' }).waitFor({ timeout: 8000 });
+const groupText = await teacher.locator('main').filter({ visible: true }).innerText();
+check('el grupo muestra clases y alumnos con su avance', /Clase 1/.test(groupText) && /resueltos|Sin ejercicios/.test(groupText), groupText.slice(0, 200));
+await teacher.screenshot({ path: join(output, 'profesor-grupo-tableta.png'), fullPage: true });
+const take = teacher.getByRole('link', { name: /Tomar asistencia|Ver o corregir/ }).filter({ visible: true }).first();
+await take.click();
+await teacher.waitForURL(/\/clases\/[0-9a-f-]{36}\?n=1/);
+// La URL cambia antes de que llegue el contenido nuevo: se espera la lista de la clase.
+await teacher.locator('[aria-label="Resumen de la clase"]').filter({ visible: true }).waitFor({ timeout: 8000 });
+const allPresent = teacher.getByRole('button', { name: 'Todos presentes' }).filter({ visible: true });
+if (await allPresent.count()) {
+  await allPresent.click();
+  await waitForText(teacher.locator('[aria-label="Resumen de la clase"]').filter({ visible: true }), (t) => /Sin marcar\s*0/.test(t));
+}
+const summary = await teacher.locator('[aria-label="Resumen de la clase"]').filter({ visible: true }).innerText();
+check('asistencia en un clic: no queda nadie sin marcar', /Sin marcar\s*0/.test(summary), summary);
+const unchecked = await teacher.locator('form ol li').filter({ visible: true }).filter({ hasNot: teacher.locator('input[type="radio"]:checked') }).count();
+check('la lista refleja lo guardado (nadie queda sin opción elegida)', unchecked === 0, unchecked);
+await teacher.screenshot({ path: join(output, 'profesor-asistencia-tableta.png'), fullPage: true });
+check('pantallas del profesor sin desborde en tableta', await noHorizontalScroll(teacher));
+const foreign = await teacher.goto(`${base}/admin`, { waitUntil: 'networkidle' });
+check('la profesora no entra a la administración', teacher.url().endsWith('/profesor'), [foreign?.status(), teacher.url()]);
+await teacherContext.close();
+
 check('sin errores en consola', errors.length === 0, errors.slice(0, 3).join(' | '));
 await browser.close();
 finish();

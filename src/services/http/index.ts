@@ -6,6 +6,8 @@ import { backendAuth } from './auth';
 import { fetchLiveSchedule } from './classes';
 import { fetchStudentAttendance } from './student-attendance';
 import { fetchChildren } from './family';
+import { httpPractice } from './practice';
+import { httpTeacher } from './teacher';
 import { enc } from './shared';
 
 // Implementación contra la API .NET. Cada método es una llamada fina: la lógica de negocio
@@ -16,6 +18,8 @@ import { enc } from './shared';
 export const httpServices: Services = {
   auth: backendAuth,
   admin: httpAdmin,
+  practice: httpPractice,
+  teacher: httpTeacher,
 
   students: {
     getProfile: ({ token }) => apiRequest('/students/me', { token }),

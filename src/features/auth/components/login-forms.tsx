@@ -17,6 +17,7 @@ const SECRET_LENGTH = 3;
 export interface DemoCredentials {
   student: { username: string; pictograms: readonly string[] };
   family: { email: string; password: string };
+  teacher: { email: string; password: string };
   admin: { email: string; password: string };
 }
 
@@ -124,7 +125,7 @@ function StudentForm({ next, demo }: Pick<Props, 'next' | 'demo'>) {
 
 const EMAIL_FORM_COPY = {
   family: { email: 'Correo de la familia', placeholder: 'familia@correo.com', submit: 'Entrar como familia', help: '¿Primera vez? Usa el enlace que te enviamos por WhatsApp al matricular.' },
-  staff: { email: 'Correo del equipo', placeholder: 'nombre@matefacil.pe', submit: 'Entrar al panel', help: 'Para el equipo de Mate Fácil: administración de usuarios, familias y cursos.' },
+  staff: { email: 'Correo del equipo', placeholder: 'nombre@matefacil.pe', submit: 'Entrar al panel', help: 'Para profesores y el equipo de Mate Fácil: tus grupos y la asistencia, o la administración del aula.' },
 } as const;
 
 function EmailForm({ next, defaultEmail, variant }: Pick<Props, 'next'> & { defaultEmail?: string; variant: keyof typeof EMAIL_FORM_COPY }) {
@@ -165,7 +166,7 @@ function EmailForm({ next, defaultEmail, variant }: Pick<Props, 'next'> & { defa
 }
 
 export function LoginForms({ next, expired, demo, passwordLogin }: Props) {
-  const defaultTab = next?.startsWith('/familia') ? 'family' : next?.startsWith('/admin') ? 'staff' : 'student';
+  const defaultTab = next?.startsWith('/familia') ? 'family' : next?.startsWith('/admin') || next?.startsWith('/profesor') ? 'staff' : 'student';
   return (
     <>
       {expired && <p className={styles.notice}>Tu sesión terminó. Vuelve a ingresar para continuar.</p>}
@@ -184,6 +185,7 @@ export function LoginForms({ next, expired, demo, passwordLogin }: Props) {
           <summary>Datos de prueba (modo demo)</summary>
           <p>Alumno: <code>{demo.student.username}</code> + {demo.student.pictograms.join(' ')}</p>
           <p>Familia: <code>{demo.family.email}</code> / <code>{demo.family.password}</code></p>
+          <p>Profesora: <code>{demo.teacher.email}</code> / <code>{demo.teacher.password}</code></p>
           <p>Equipo: <code>{demo.admin.email}</code> / <code>{demo.admin.password}</code></p>
         </details>
       )}

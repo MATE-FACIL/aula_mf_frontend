@@ -27,9 +27,10 @@ interface BackendMe {
 /** El backend todavía no guarda zona horaria por persona: Mate Fácil opera en Perú. */
 const DEFAULT_TIME_ZONE = 'America/Lima';
 
-/** Si una persona tiene varios roles, gana el de más alcance. */
+/** Si una persona tiene varios roles, gana el de más alcance (un profesor que además es padre entra como profesor). */
 export function roleFromBackend(roles: readonly string[]): Role | null {
   if (roles.includes('administrator')) return 'admin';
+  if (roles.includes('instructor')) return 'teacher';
   if (roles.includes('guardian')) return 'family';
   if (roles.includes('student')) return 'student';
   return null;

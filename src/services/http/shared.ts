@@ -17,3 +17,6 @@ async function nullOn<T>(code: ApiErrorCode, promise: Promise<T>): Promise<T | n
 export const nullOn401 = <T>(promise: Promise<T>) => nullOn('unauthorized', promise);
 
 export const nullOn404 = <T>(promise: Promise<T>) => nullOn('not_found', promise);
+
+/** Algo que existe pero no es de quien pregunta (p. ej. la clase de otro profesor) se muestra como «no encontrado». */
+export const nullOn403or404 = <T>(promise: Promise<T>) => nullOn404(nullOn('forbidden', promise));

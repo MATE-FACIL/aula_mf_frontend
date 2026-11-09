@@ -3,7 +3,9 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { base, launch, mockToken, output } from '../lib.mjs';
 
-const SESSIONS = { student: ['stu-valentina', 'student'], family: ['fam-roque', 'family'], admin: ['adm-equipo', 'admin'] };
+const SESSIONS = { student: ['stu-valentina', 'student'], family: ['fam-roque', 'family'], teacher: ['tch-lucia', 'teacher'], admin: ['adm-equipo', 'admin'] };
+/** Lección de práctica de la demo (ids fijos en services/mock/practice.ts). */
+const DEMO_PRACTICE_LESSON = 'a1b2c3d4-0000-4000-8000-000000000101';
 const VIEWPORTS = [[320, 640], [390, 844], [768, 1024], [1280, 800]];
 const THEMES = [['claro', 'claro'], ['oscuro', 'oscuro']];
 
@@ -108,10 +110,16 @@ const browser = await launch();
 const results = [];
 
 async function discover(role, context) {
-  if (role === 'student') return ['/inicio', '/ruta', '/lecciones', '/evaluaciones', '/clases', '/logros'];
+  if (role === 'student') return ['/inicio', '/ruta', '/lecciones', '/lecciones/practica', `/lecciones/practica/${DEMO_PRACTICE_LESSON}`, '/evaluaciones', '/clases', '/logros'];
   if (role === 'family') return ['/familia'];
   const page = await context.newPage();
   const find = async (url, re) => { await page.goto(base + url); await page.waitForLoadState('networkidle'); return (await page.content()).match(re)?.[1]; };
+  if (role === 'teacher') {
+    const groupId = await find('/profesor', /href="\/profesor\/grupos\/([0-9a-f-]{36})"/);
+    const classPath = await find(`/profesor/grupos/${groupId}`, /href="(\/profesor\/grupos\/[0-9a-f-]{36}\/clases\/[0-9a-f-]{36}\?n=\d+)"/);
+    await page.close();
+    return ['/profesor', `/profesor/grupos/${groupId}`, classPath];
+  }
   const courseId = await find('/admin/cursos', /href="\/admin\/cursos\/([0-9a-f-]{36})"/);
   const groupId = await find(`/admin/cursos/${courseId}`, new RegExp(`/admin/cursos/${courseId}/grupos/([0-9a-f-]{36})`));
   const userId = await find('/admin/usuarios?rol=student', /href="\/admin\/usuarios\/([0-9a-f-]{36})"/);

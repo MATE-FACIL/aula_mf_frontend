@@ -4,9 +4,10 @@ import { ApiError } from '@/lib/http/errors';
 import { addDaysToKey, formatTime, localDateKey, weekdayOfKey, zonedDateTime } from '@/lib/time';
 import type { AppNotification, CalendarEvent, ChatMessage, ChildOverview, EvaluationSummary, LiveClass, QuizQuestion, Role, SessionUser, Task } from '@/types/domain';
 import type { RequestContext, Schedule, Services } from '../contracts';
-import { mockAdmin } from './admin';
+import { mockAdmin, mockTeacher } from './admin';
 import * as data from './data';
 import { checkFractionAnswer, gradeQuiz } from './grading';
+import { mockPractice } from './practice';
 import { tutorReply } from './tutor-engine';
 
 // Implementación EN MEMORIA de los contratos, para trabajar el frontend sin la API .NET.
@@ -85,6 +86,7 @@ function verifyToken(token: string): TokenPayload | null {
 
 function userFor(sub: string, role: Role): SessionUser {
   if (role === 'admin') return { id: sub, role, displayName: 'Equipo Mate Fácil', timeZone: 'America/Lima' };
+  if (role === 'teacher') return { id: sub, role, displayName: 'Lucía Paredes', timeZone: 'America/Lima' };
   if (role === 'student') {
     const p = data.profiles[sub];
     return { id: sub, role, displayName: p.firstName, timeZone: p.timeZone };
@@ -93,8 +95,7 @@ function userFor(sub: string, role: Role): SessionUser {
 }
 
 /** Usuario de demostración de cada rol (el modo híbrido lo usa para dar datos mock a una sesión real). */
-export const demoUserFor = (role: Role): SessionUser =>
-  userFor(role === 'student' ? data.DEMO_IDS.student : role === 'admin' ? data.DEMO_IDS.admin : data.DEMO_IDS.family, role);
+export const demoUserFor = (role: Role): SessionUser => userFor(data.DEMO_IDS[role], role);
 
 function requireRole(ctx: RequestContext, role: Role) {
   if (ctx.user.role !== role) throw new ApiError('forbidden', `Se requiere el rol ${role}`, 403);
@@ -168,7 +169,7 @@ export const mockServices: Services = {
     async loginFamily({ email, password }) {
       await delay();
       const normalized = email.trim().toLowerCase();
-      for (const role of ['family', 'admin'] as const) {
+      for (const role of ['family', 'teacher', 'admin'] as const) {
         const demo = data.DEMO_CREDENTIALS[role];
         if (normalized === demo.email && password === demo.password) {
           return { token: issueToken(data.DEMO_IDS[role], role), user: userFor(data.DEMO_IDS[role], role), expiresIn: SESSION_TTL_SEC };
@@ -377,4 +378,6 @@ export const mockServices: Services = {
   },
 
   admin: mockAdmin,
+  practice: mockPractice,
+  teacher: mockTeacher,
 };

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { PageHeader, PageSkeleton } from '@/components/ui/primitives';
 import { Tabs } from '@/components/ui/tabs';
@@ -13,7 +14,9 @@ export const metadata: Metadata = { title: 'Lecciones' };
 export default function LessonsPage({ searchParams }: PageProps<'/lecciones'>) {
   return (
     <div className="page">
-      <PageHeader title="Lecciones" description="Cambia entre la ruta de Matemáticas y la del laboratorio del mes." />
+      <PageHeader title="Lecciones" description="Cambia entre la ruta de Matemáticas y la del laboratorio del mes.">
+        <Link className="btn btn--primary" href="/lecciones/practica">Mis prácticas</Link>
+      </PageHeader>
       <Suspense fallback={<PageSkeleton />}>
         <LessonsContent searchParams={searchParams} />
       </Suspense>
