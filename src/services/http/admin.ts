@@ -50,6 +50,11 @@ export const httpAdmin: AdminService = {
   activateEnrollment: ({ token }, enrollmentId, paymentNote) =>
     apiRequest(`/enrollments/${enc(enrollmentId)}/activate`, { method: 'POST', token, body: { paymentNote: paymentNote ?? null } }),
   withdrawEnrollment: ({ token }, enrollmentId) => apiRequest(`/enrollments/${enc(enrollmentId)}/withdraw`, { method: 'POST', token }),
+  getPlacement: ({ token }, studentUserId) => nullOn404(apiRequest(`/enrollments/placement${query({ studentUserId })}`, { token })),
+  transferEnrollment: ({ token }, enrollmentId, { courseOfferingId, reason }) =>
+    apiRequest(`/enrollments/${enc(enrollmentId)}/transfer`, { method: 'POST', token, body: { courseOfferingId, reason: reason ?? null } }),
+  listTransfers: ({ token }, { studentUserId, courseOfferingId, page, pageSize }) =>
+    apiRequest(`/enrollments/transfers${query({ studentUserId, courseOfferingId, page, pageSize })}`, { token }),
 
   listOfferings: ({ token }, courseId) => nullOn404(apiRequest(`/courses/${enc(courseId)}/offerings`, { token })),
   getOffering: ({ token }, courseId, offeringId) =>

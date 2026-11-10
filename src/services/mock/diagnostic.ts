@@ -73,7 +73,7 @@ interface MockAttempt {
 }
 
 const globalForStore = globalThis as unknown as { __mfDiagnostics?: Map<string, MockAttempt> };
-const attempts = () => (globalForStore.__mfDiagnostics ??= new Map());
+const attempts = (): Map<string, MockAttempt> => (globalForStore.__mfDiagnostics ??= new Map());
 
 const question = (id: string) => [...BANK.primary, ...BANK.secondary].find((item) => item.id === id)!;
 
@@ -145,6 +145,17 @@ function review(attempt: MockAttempt): DiagnosticReview {
 }
 
 const notFound = () => new ApiError('not_found', 'Diagnóstico no encontrado', 404);
+
+/** Los diagnósticos de un alumno, como los necesita la ubicación en un grupo (modo demo). */
+export function diagnosticsOf(studentId: string) {
+  return [...attempts().values()]
+    .filter((attempt) => attempt.studentId === studentId)
+    .map((attempt) => ({
+      attemptId: attempt.id, stage: attempt.stage, stageLabel: STAGE_LABEL[attempt.stage],
+      status: attempt.completedAt ? ('completed' as const) : ('in_progress' as const),
+      suggested: level(attempt.suggested), confirmed: level(attempt.confirmed),
+    }));
+}
 
 export const mockDiagnostic: DiagnosticService = {
   async overview(ctx) {

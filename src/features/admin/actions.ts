@@ -9,6 +9,7 @@ import type { IssuedCredentials } from '@/types/admin';
 import {
   isUuid,
   parseAttendanceForm,
+  parseTransferForm,
   parseCategoryName,
   parseCourseForm,
   parseGuardianForm,
@@ -217,6 +218,18 @@ export async function withdrawEnrollmentAction(_prev: AdminActionState, form: Fo
     await services.admin.withdrawEnrollment(ctx, enrollmentId);
     refresh();
     return { message: 'Matrícula retirada: el cupo quedó libre.' };
+  });
+}
+
+/** Cambio de grupo (SCRUM-45): el backend valida el cupo del destino y deja el cambio registrado. */
+export async function transferEnrollmentAction(_prev: AdminActionState, form: FormData): Promise<AdminActionState> {
+  return adminMutation(async (ctx) => {
+    const parsed = parseTransferForm(form);
+    if (!parsed.ok) return invalid(parsed.fieldErrors);
+    const { enrollmentId, courseOfferingId, reason } = parsed.value;
+    const transfer = await services.admin.transferEnrollment(ctx, enrollmentId, { courseOfferingId, reason });
+    refresh();
+    return { message: `${transfer.studentName} pasó a «${transfer.toOfferingName}». El cambio quedó registrado.` };
   });
 }
 

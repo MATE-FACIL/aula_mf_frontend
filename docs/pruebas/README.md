@@ -1,16 +1,17 @@
 # Pruebas del aula
 
-Resultados del 10 de noviembre de 2026 sobre la rama `feature/scrum-48-49-diagnostico`, con el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 10 de noviembre de 2026 sobre la rama `feature/scrum-45-asignacion-grupo`, con la asignación a grupo según el diagnóstico (SCRUM-45), el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
-| Unitarias (Vitest) | En memoria | **100 de 100**, en 21 archivos |
+| Unitarias (Vitest) | En memoria | **103 de 103**, en 21 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
 | Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
 | Sesión y renovación | Aula conectada a la API en Docker | **12 de 12** |
 | Práctica y profesor con login real | Aula conectada a la API en Docker | **18 de 18** |
 | Diagnóstico con login real | Aula conectada a la API en Docker | **19 de 19** |
+| Asignación a grupo y cambio de grupo | Aula conectada a la API en Docker | **16 de 16** |
 | Contraste y desborde | Modo mock | 272 combinaciones: 0 problemas |
 | Flujos en celular, tableta y modo oscuro | Modo mock | **38 de 38** |
 
@@ -24,7 +25,7 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 
 | Pantalla | Datos reales | Datos de ejemplo |
 |---|---|---|
-| Administración | Todo | Nada |
+| Administración | Todo, incluida la asignación a grupo | Nada |
 | Familia | Hijos, matrículas, próximas clases, profesores y asistencia | Notificación de la campana |
 | Alumno | Clases en vivo, calendario, enlace para entrar, asistencia, **Mis prácticas** (ejercicios, corrección y avance) y el **diagnóstico de entrada** | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
 | Profesor | Todo | Nada |
@@ -104,6 +105,14 @@ Niveles de Matemáticas (SCRUM-39): los 8 niveles con sus 14 sesiones, y el bot�
 Celular en modo oscuro:
 
 <img src="capturas/admin-07-resumen-celular-oscuro.png" alt="Resumen en celular" width="240"> <img src="capturas/admin-07-usuarios-celular-oscuro.png" alt="Usuarios en celular" width="240"> <img src="capturas/admin-07-cursos-celular-oscuro.png" alt="Cursos en celular" width="240"> <img src="capturas/admin-07-matriculas-celular-oscuro.png" alt="Matrículas en celular" width="240">
+
+Asignación a grupo (SCRUM-45). En escritorio, la ficha del alumno muestra qué dijo el diagnóstico (aquí, nivel confirmado Básico) y la matrícula con «Cambiar de grupo»; el selector de grupos pone primero los de ese nivel. En el celular, el formulario de cambio abierto:
+
+<img src="capturas/admin-12-asignacion-escritorio.png" alt="Ficha del alumno con su nivel confirmado y sus matrículas" width="420"> <img src="capturas/admin-14-cambio-grupo-celular.png" alt="Formulario de cambio de grupo en el celular" width="240">
+
+Después del cambio, la matrícula anterior dice a dónde cambió y el historial lo registra con su motivo:
+
+<img src="capturas/admin-13-cambio-grupo-escritorio.png" alt="Ficha del alumno tras el cambio de grupo, con el historial" width="420">
 
 ### Alumno
 
@@ -241,6 +250,25 @@ Revisión del diagnóstico en tableta (SCRUM-48): el resultado, cada respuesta c
 - revisión sin desborde en tableta
 - el backend guardó el nivel confirmado por el profesor
 - el alumno ve el nivel confirmado
+- el banco de preguntas queda como estaba
+- sin errores en el navegador
+
+### Asignación a grupo
+
+- terminado sin confirmar: muestra el nivel sugerido y pide confirmarlo
+- ofrece revisar y confirmar el diagnóstico
+- sin nivel confirmado no hay grupos recomendados
+- confirmado: muestra el nivel y qué grupos salen primero
+- al matricular, los grupos de primaria Básico van primero con su cupo
+- el grupo lleno aparece deshabilitado
+- el cambio se aplica y se ve en el historial con su motivo
+- la matrícula anterior dice a dónde cambió, no «retirada»
+- en el grupo nuevo queda su matrícula pendiente
+- el cambio al grupo lleno no se puede elegir
+- el backend liberó el cupo de A y ocupó el de B
+- el backend guardó el cambio con su motivo
+- ficha del alumno sin desborde en escritorio
+- ficha del alumno sin desborde en el celular
 - el banco de preguntas queda como estaba
 - sin errores en el navegador
 

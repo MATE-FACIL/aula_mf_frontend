@@ -1,6 +1,6 @@
 # Lista de pruebas unitarias
 
-Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
+Las 103 pruebas de Vitest, por archivo. Todas pasaron el 10 de noviembre de 2026.
 
 ## `src/app/manifest.test.ts` (6)
 
@@ -10,6 +10,11 @@ Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - manifest de la PWA → los accesos directos llevan a pantallas reales del alumno
 - service worker → solo precachea archivos que existen (si no, la instalación del SW falla entera)
 - service worker → solo toca peticiones GET del mismo origen y nunca guarda páginas (HTML autenticado)
+
+## `src/components/layout/side-nav.test.ts` (2)
+
+- currentHref → marca el enlace más específico
+- currentHref → respeta los enlaces exactos y no marca nada sin ruta
 
 ## `src/features/admin/attendance.test.ts` (4)
 
@@ -41,7 +46,7 @@ Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - generateSessions → empieza el mismo día si coincide y salta los días no marcados
 - generateSessions → valida los datos antes de generar
 
-## `src/features/admin/validation.test.ts` (9)
+## `src/features/admin/validation.test.ts` (12)
 
 - parseStudentForm → limpia espacios y omite opcionales vacíos
 - parseStudentForm → exige nombres, apellido y documento, y valida el correo
@@ -52,6 +57,20 @@ Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - checkCover → acepta imágenes livianas y rechaza otros tipos o tamaños
 - parseOfferingForm → arma el grupo con la cantidad de clases del horario
 - parseOfferingForm → rechaza horarios mal formados, enlaces no http y cupos inválidos
+- parseTransferForm (SCRUM-45) → limpia el motivo y lo omite si queda vacío
+- parseTransferForm (SCRUM-45) → exige una matrícula y un grupo de destino válidos
+- parseTransferForm (SCRUM-45) → rechaza un motivo demasiado largo (igual que el backend)
+
+## `src/features/diagnostic/rules.test.ts` (8)
+
+- scoreDiagnostic → sugiere el primer nivel que aún no domina (igual que el backend)
+- scoreDiagnostic → con el 60 % domina el nivel
+- scoreDiagnostic → si domina todos, sugiere el más alto medido; si falla el primero, el primero
+- scoreDiagnostic → los temas conservan su orden y se juntan sin importar mayúsculas
+- ayudas → retoma en la primera sin responder
+- ayudas → valida niveles y filtros que llegan del navegador
+- ayudas → muestra los decimales con coma
+- ayudas → cuenta en singular y plural
 
 ## `src/features/practice/answer.test.ts` (7)
 
@@ -92,6 +111,10 @@ Las 89 pruebas de Vitest, por archivo. Todas pasaron el 9 de noviembre de 2026.
 - refreshTokenFrom → lee solo la cookie de renovación del backend
 - renewBackendSession → peticiones simultáneas con el mismo token hacen UNA sola renovación (el backend rota y revoca reusos)
 - renewBackendSession → distingue sesión terminada (401) de backend caído
+
+## `src/server/auth/constants.test.ts` (1)
+
+- areaOf → el diagnóstico del alumno es del área del alumno; su revisión, del profesor y del administrador
 
 ## `src/services/http/attendance.test.ts` (3)
 
