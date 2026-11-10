@@ -56,6 +56,15 @@ import type {
   SessionAttendance,
   UserListFilters,
 } from '@/types/admin';
+import type {
+  DiagnosticAnswerResult,
+  DiagnosticFilter,
+  DiagnosticPage,
+  DiagnosticReview,
+  DiagnosticStage,
+  DiagnosticStageSummary,
+  StudentDiagnostic,
+} from '@/types/diagnostic';
 import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
@@ -233,6 +242,24 @@ export interface TeacherService {
   markRemainingPresent(ctx: RequestContext, sessionId: string): Promise<SessionAttendance>;
 }
 
+/**
+ * Diagnóstico de entrada (SCRUM-48/49): el alumno lo rinde una vez por etapa y recibe el resultado por tema y un
+ * nivel sugerido; el profesor (o el administrador) revisa cada respuesta y confirma el nivel.
+ */
+export interface DiagnosticService {
+  overview(ctx: RequestContext): Promise<DiagnosticStageSummary[]>;
+  /** Empieza el de la etapa o devuelve el que ya existe (también si ya terminó). */
+  start(ctx: RequestContext, stage: DiagnosticStage): Promise<StudentDiagnostic>;
+  /** null si no existe o es de otro alumno. */
+  get(ctx: RequestContext, attemptId: string): Promise<StudentDiagnostic | null>;
+  /** `skip`: «No lo sé» (cuenta como incorrecta). */
+  answer(ctx: RequestContext, attemptId: string, questionId: string, answer: string | null, skip: boolean): Promise<DiagnosticAnswerResult>;
+  listReviews(ctx: RequestContext, filter: DiagnosticFilter, page: number): Promise<DiagnosticPage>;
+  /** null si no existe. */
+  getReview(ctx: RequestContext, attemptId: string): Promise<DiagnosticReview | null>;
+  confirm(ctx: RequestContext, attemptId: string, level: string): Promise<DiagnosticReview>;
+}
+
 export interface Services {
   auth: AuthService;
   students: StudentService;
@@ -245,4 +272,5 @@ export interface Services {
   admin: AdminService;
   practice: PracticeService;
   teacher: TeacherService;
+  diagnostic: DiagnosticService;
 }

@@ -7,6 +7,7 @@ import type { RequestContext, Schedule, Services } from '../contracts';
 import { mockAdmin, mockTeacher } from './admin';
 import * as data from './data';
 import { checkFractionAnswer, gradeQuiz } from './grading';
+import { mockDiagnostic } from './diagnostic';
 import { mockPractice } from './practice';
 import { tutorReply } from './tutor-engine';
 
@@ -380,4 +381,5 @@ export const mockServices: Services = {
   admin: mockAdmin,
   practice: mockPractice,
   teacher: mockTeacher,
+  diagnostic: mockDiagnostic,
 };
