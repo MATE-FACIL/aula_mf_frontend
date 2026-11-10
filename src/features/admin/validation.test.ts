@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkCover, parseCourseForm, parseGuardianForm, parseOfferingForm, parseStudentForm } from './validation';
+import { checkCover, parseCourseForm, parseGuardianForm, parseOfferingForm, parseStudentForm, parseTransferForm, TRANSFER_REASON_MAX } from './validation';
 
 const form = (entries: Record<string, string>) => {
   const data = new FormData();
@@ -79,5 +79,29 @@ describe('parseOfferingForm', () => {
     expect(parseOfferingForm(form({ ...valid, sessions: JSON.stringify([{ ...session, id: 'x' }]) })).ok).toBe(false);
     expect(parseOfferingForm(form({ ...valid, maximumCapacity: '0' })).ok).toBe(false);
     expect(parseOfferingForm(form({ ...valid, currencyCode: 'EUR' })).ok).toBe(false);
+  });
+});
+
+describe('parseTransferForm (SCRUM-45)', () => {
+  const ENROLLMENT = '0b6e8f3c-0000-4000-8000-000000000001';
+  const GROUP = '0b6e8f3c-0000-4000-8000-000000000002';
+
+  it('limpia el motivo y lo omite si queda vacío', () => {
+    expect(parseTransferForm(form({ enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: '  El diagnóstico confirmó Básico  ' })))
+      .toEqual({ ok: true, value: { enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: 'El diagnóstico confirmó Básico' } });
+    expect(parseTransferForm(form({ enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: '   ' })))
+      .toEqual({ ok: true, value: { enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: undefined } });
+  });
+
+  it('exige una matrícula y un grupo de destino válidos', () => {
+    expect(parseTransferForm(form({ courseOfferingId: GROUP }))).toEqual({ ok: false, fieldErrors: { enrollmentId: 'La solicitud no es válida. Recarga la página.' } });
+    expect(parseTransferForm(form({ enrollmentId: ENROLLMENT, courseOfferingId: 'no-es-id' }))).toEqual({ ok: false, fieldErrors: { courseOfferingId: 'Elige el grupo de destino.' } });
+  });
+
+  it('rechaza un motivo demasiado largo (igual que el backend)', () => {
+    const result = parseTransferForm(form({ enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: 'x'.repeat(TRANSFER_REASON_MAX + 1) }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.fieldErrors.reason).toContain('300');
+    expect(parseTransferForm(form({ enrollmentId: ENROLLMENT, courseOfferingId: GROUP, reason: 'x'.repeat(TRANSFER_REASON_MAX) })).ok).toBe(true);
   });
 });

@@ -167,6 +167,80 @@ export interface OfferingSeats {
   freeSeats: number;
 }
 
+// ─── Asignación a grupo según el diagnóstico (SCRUM-45) ────────────────
+
+export interface PlacementLevel {
+  code: string;
+  label: string;
+}
+
+/** El diagnóstico de una etapa. `confirmed` es null hasta que el profesor confirma el nivel. */
+export interface PlacementDiagnostic {
+  attemptId: string;
+  stage: 'primary' | 'secondary';
+  stageLabel: string;
+  status: 'in_progress' | 'completed';
+  suggested: PlacementLevel | null;
+  confirmed: PlacementLevel | null;
+}
+
+export interface PlacementEnrollment {
+  enrollmentId: string;
+  offeringId: string;
+  courseTitle: string;
+  offeringName: string;
+  status: EnrollmentStatus;
+}
+
+/** Un grupo de Matemáticas publicado. `recommended`: es del nivel que el profesor confirmó en el diagnóstico. */
+export interface PlacementGroup {
+  offeringId: string;
+  courseId: string;
+  courseTitle: string;
+  offeringName: string;
+  stageLabel: string;
+  levelLabel: string;
+  maximumCapacity: number;
+  takenSeats: number;
+  freeSeats: number;
+  recommended: boolean;
+  alreadyEnrolled: boolean;
+}
+
+export interface Placement {
+  studentUserId: string;
+  studentName: string;
+  diagnostics: PlacementDiagnostic[];
+  enrollments: PlacementEnrollment[];
+  /** Los recomendados primero. */
+  groups: PlacementGroup[];
+}
+
+/** Un cambio de grupo: quién, cuándo, de qué grupo a cuál y por qué. */
+export interface EnrollmentTransfer {
+  id: string;
+  studentUserId: string;
+  studentName: string;
+  fromOfferingId: string;
+  fromCourseTitle: string;
+  fromOfferingName: string;
+  toOfferingId: string;
+  toCourseTitle: string;
+  toOfferingName: string;
+  fromEnrollmentId: string;
+  toEnrollmentId: string;
+  reason: string | null;
+  transferredAt: string;
+  transferredByName: string | null;
+}
+
+export interface TransferFilters {
+  studentUserId?: string;
+  courseOfferingId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface EnrollmentFilters {
   courseOfferingId?: string;
   studentUserId?: string;

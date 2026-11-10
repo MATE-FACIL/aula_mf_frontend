@@ -168,6 +168,22 @@ export function parseOfferingForm(form: FormData): Parsed<SaveOfferingInput> {
 
 // ─── Asistencia (SCRUM-53) ───────────────────────────────────────────
 
+/** Igual que el backend (`EnrollmentTransfer.MaxReasonLength`). */
+export const TRANSFER_REASON_MAX = 300;
+
+/** Cambio de grupo (SCRUM-45): la matrícula, el grupo de destino y un motivo opcional. */
+export function parseTransferForm(form: FormData): Parsed<{ enrollmentId: string; courseOfferingId: string; reason: string | undefined }> {
+  const enrollmentId = form.get('enrollmentId');
+  if (!isUuid(enrollmentId)) return { ok: false, fieldErrors: { enrollmentId: 'La solicitud no es válida. Recarga la página.' } };
+  const courseOfferingId = form.get('courseOfferingId');
+  if (!isUuid(courseOfferingId)) return { ok: false, fieldErrors: { courseOfferingId: 'Elige el grupo de destino.' } };
+  const reason = String(form.get('reason') ?? '').trim();
+  if (reason.length > TRANSFER_REASON_MAX) {
+    return { ok: false, fieldErrors: { reason: `El motivo admite como máximo ${TRANSFER_REASON_MAX} caracteres.` } };
+  }
+  return { ok: true, value: { enrollmentId, courseOfferingId, reason: reason || undefined } };
+}
+
 export const ATTENDANCE_NOTE_MAX = 200;
 const ATTENDANCE_STATUSES = ['present', 'late', 'absent'] as const;
 

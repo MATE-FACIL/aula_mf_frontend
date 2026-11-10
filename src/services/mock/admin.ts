@@ -1,6 +1,7 @@
 import 'server-only';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { ApiError } from '@/lib/http/errors';
+import { diagnosticsOf } from './diagnostic';
 import type {
   AccountStatus,
   AdminCourse,
@@ -14,10 +15,12 @@ import type {
   CourseOffering,
   Enrollment,
   EnrollmentStatus,
+  EnrollmentTransfer,
   Instructor,
   IssuedCredentials,
   MathLevel,
   OfferingSeats,
+  Placement,
   SaveOfferingInput,
   SessionAttendance,
   SessionAttendanceStudent,
@@ -167,6 +170,18 @@ interface MockInstructor {
   email: string;
 }
 
+interface MockTransfer {
+  id: string;
+  studentUserId: string;
+  fromEnrollmentId: string;
+  toEnrollmentId: string;
+  fromOfferingId: string;
+  toOfferingId: string;
+  reason: string | null;
+  transferredAt: string;
+  transferredBy: string;
+}
+
 interface MockEnrollment {
   id: string;
   studentUserId: string;
@@ -223,6 +238,7 @@ function createEnrollmentStore() {
   return {
     offerings,
     instructors,
+    transfers: [] as MockTransfer[],
     enrollments: [
       enrollment('Valentina', offerings[0], 'active', 'Yape · op. 482913'),
       enrollment('Lucía', offerings[0], 'pending', null),
@@ -320,6 +336,26 @@ function toEnrollment(e: MockEnrollment): Enrollment {
     offeringName: offering?.name ?? '(edición eliminada)', status: e.status, paymentNote: e.paymentNote,
     createdAt: e.createdAt, createdByName: nameOf(e.createdBy), activatedAt: e.activatedAt, activatedByName: nameOf(e.activatedBy),
     withdrawnAt: e.withdrawnAt, withdrawnByName: nameOf(e.withdrawnBy),
+  };
+}
+
+function toTransfer(t: MockTransfer): EnrollmentTransfer {
+  const people = store().people;
+  const person = (id: string) => people.find((p) => p.id === id);
+  const edition = (id: string) => {
+    const offering = enrollmentStore().offerings.find((o) => o.id === id);
+    return { course: store().courses.find((c) => c.id === offering?.courseId)?.title ?? '(curso eliminado)', name: offering?.name ?? '(edición eliminada)' };
+  };
+  const from = edition(t.fromOfferingId);
+  const to = edition(t.toOfferingId);
+  const student = person(t.studentUserId);
+  const by = person(t.transferredBy);
+  return {
+    id: t.id, studentUserId: t.studentUserId, studentName: student ? fullName(student) : '(persona eliminada)',
+    fromOfferingId: t.fromOfferingId, fromCourseTitle: from.course, fromOfferingName: from.name,
+    toOfferingId: t.toOfferingId, toCourseTitle: to.course, toOfferingName: to.name,
+    fromEnrollmentId: t.fromEnrollmentId, toEnrollmentId: t.toEnrollmentId, reason: t.reason, transferredAt: t.transferredAt,
+    transferredByName: by ? fullName(by) : null,
   };
 }
 
@@ -581,6 +617,92 @@ export const mockAdmin: AdminService = {
     };
     enrollmentStore().enrollments.push(e);
     return toEnrollment(e);
+  },
+
+  async getPlacement(ctx, studentUserId) {
+    requireAdmin(ctx);
+    await delay();
+    const student = store().people.find((p) => p.id === studentUserId);
+    if (!student) return null;
+    if (!student.roles.includes('student')) {
+      throw new ApiError('validation', 'No es alumno', 400, undefined, 'Solo se puede ubicar a personas con rol de alumno.');
+    }
+    const diagnostics = diagnosticsOf(studentUserId);
+    const confirmed = new Map(diagnostics.filter((d) => d.confirmed).map((d) => [d.stageLabel, d.confirmed!.label]));
+    const live = enrollmentStore().enrollments.filter((e) => e.studentUserId === studentUserId && e.status !== 'withdrawn');
+    const groups = enrollmentStore().offerings.flatMap((o): Placement['groups'] => {
+      const course = store().courses.find((c) => c.id === o.courseId);
+      // Solo los cursos que son un nivel de Matemáticas, p. ej. «Matemáticas · Primaria Básico».
+      const match = /(Primaria|Secundaria)\s+(Prebásico|Básico|Intermedio|Avanzado)/.exec(course?.title ?? '');
+      if (!match || o.status !== 'published') return [];
+      const taken = takenSeats(o.id);
+      return [{
+        offeringId: o.id, courseId: o.courseId, courseTitle: course!.title, offeringName: o.name, stageLabel: match[1], levelLabel: match[2],
+        maximumCapacity: o.maximumCapacity, takenSeats: taken, freeSeats: Math.max(0, o.maximumCapacity - taken),
+        recommended: confirmed.get(match[1]) === match[2], alreadyEnrolled: live.some((e) => e.courseOfferingId === o.id),
+      }];
+    }).sort((a, b) => Number(b.recommended) - Number(a.recommended));
+    return {
+      studentUserId, studentName: fullName(student), diagnostics,
+      enrollments: live.map((e) => {
+        const view = toEnrollment(e);
+        return { enrollmentId: e.id, offeringId: e.courseOfferingId, courseTitle: view.courseTitle, offeringName: view.offeringName, status: e.status };
+      }),
+      groups,
+    };
+  },
+
+  async transferEnrollment(ctx, enrollmentId, { courseOfferingId, reason }) {
+    requireAdmin(ctx);
+    await delay();
+    if (reason && reason.trim().length > 300) {
+      throw new ApiError('validation', 'Motivo largo', 400, undefined, 'El motivo es demasiado largo (máximo 300 caracteres).');
+    }
+    const destination = enrollmentStore().offerings.find((o) => o.id === courseOfferingId);
+    if (!destination) throw new ApiError('not_found', 'Destino', 404, undefined, 'No encontramos el grupo de destino.');
+    if (destination.status !== 'published') {
+      throw new ApiError('conflict', 'Borrador', 409, undefined, 'El grupo de destino todavía está en borrador. Publícalo para poder pasar alumnos a él.');
+    }
+    const source = findEnrollment(enrollmentId);
+    if (source.status === 'withdrawn') {
+      throw new ApiError('conflict', 'Retirada', 409, undefined, 'La matrícula ya estaba retirada: no se puede pasar a otro grupo.');
+    }
+    if (source.courseOfferingId === courseOfferingId) {
+      throw new ApiError('validation', 'Mismo grupo', 400, undefined, 'El alumno ya está en ese grupo.');
+    }
+    const live = enrollmentStore().enrollments.filter((e) => e.courseOfferingId === courseOfferingId && e.status !== 'withdrawn');
+    if (live.some((e) => e.studentUserId === source.studentUserId)) {
+      throw new ApiError('conflict', 'Duplicada', 409, undefined, 'El alumno ya tiene una matrícula en el grupo de destino.');
+    }
+    if (live.length >= destination.maximumCapacity) {
+      const cap = destination.maximumCapacity;
+      throw new ApiError('conflict', 'Lleno', 409, undefined, `El grupo de destino está lleno (${cap} de ${cap} cupos).`);
+    }
+    const now = new Date().toISOString();
+    // La matrícula nueva conserva el estado y, si el pago estaba confirmado, quién lo confirmó y cuándo.
+    const moved: MockEnrollment = {
+      id: randomUUID(), studentUserId: source.studentUserId, courseOfferingId, status: source.status, paymentNote: source.paymentNote,
+      createdAt: now, createdBy: ctx.user.id, activatedAt: source.activatedAt, activatedBy: source.activatedBy, withdrawnAt: null, withdrawnBy: null,
+    };
+    Object.assign(source, { status: 'withdrawn', withdrawnAt: now, withdrawnBy: ctx.user.id });
+    const record: MockTransfer = {
+      id: randomUUID(), studentUserId: source.studentUserId, fromEnrollmentId: source.id, toEnrollmentId: moved.id,
+      fromOfferingId: source.courseOfferingId, toOfferingId: courseOfferingId, reason: reason?.trim() || null, transferredAt: now, transferredBy: ctx.user.id,
+    };
+    enrollmentStore().enrollments.push(moved);
+    enrollmentStore().transfers.push(record);
+    return toTransfer(record);
+  },
+
+  async listTransfers(ctx, { studentUserId, courseOfferingId, page = 1, pageSize = 20 }) {
+    requireAdmin(ctx);
+    await delay();
+    const size = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+    const current = Math.max(1, page);
+    const matches = enrollmentStore().transfers
+      .filter((t) => (!studentUserId || t.studentUserId === studentUserId) && (!courseOfferingId || t.fromOfferingId === courseOfferingId || t.toOfferingId === courseOfferingId))
+      .reverse();
+    return { items: matches.slice((current - 1) * size, current * size).map(toTransfer), page: current, pageSize: size, total: matches.length };
   },
 
   async activateEnrollment(ctx, enrollmentId, paymentNote) {

@@ -74,7 +74,7 @@ async function Enrollments({ searchParams }: Pick<PageProps<'/admin/matriculas'>
         </div>
       </form>
 
-      <EnrollmentsTable enrollments={page.items} timeZone={ctx.user.timeZone} />
+      <EnrollmentsTable enrollments={page.items} timeZone={ctx.user.timeZone} move={{ offerings }} />
 
       {page.total > 0 && (
         <nav className={styles.pager} aria-label="Páginas">

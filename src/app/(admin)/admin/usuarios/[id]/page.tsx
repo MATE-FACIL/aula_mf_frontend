@@ -7,6 +7,7 @@ import { linkStudentAction, setUserActiveAction, unlinkStudentAction } from '@/f
 import { ActionForm, SubmitButton } from '@/features/admin/components/action-form';
 import styles from '@/features/admin/components/admin.module.css';
 import { EnrollForm, EnrollmentsTable } from '@/features/admin/components/enrollments';
+import { PlacementSummary, TransferHistory } from '@/features/admin/components/placement';
 import { RoleBadges, StatusBadge } from '@/features/admin/components/users-table';
 import { isUuid } from '@/features/admin/validation';
 import { formatShortDate } from '@/lib/time';
@@ -171,15 +172,29 @@ async function LinkExistingStudent({ ctx, guardian, search }: { ctx: Session; gu
 const STUDENT_ENROLLMENTS = 50;
 
 async function StudentEnrollments({ ctx, studentId }: { ctx: Session; studentId: string }) {
-  const [page, offerings] = await Promise.all([
+  // Cuatro lecturas independientes, en paralelo: una sola espera.
+  const [page, offerings, placement, transfers] = await Promise.all([
     services.admin.listEnrollments(ctx, { studentUserId: studentId, page: 1, pageSize: STUDENT_ENROLLMENTS }),
     services.admin.listOfferingSeats(ctx),
+    services.admin.getPlacement(ctx, studentId),
+    services.admin.listTransfers(ctx, { studentUserId: studentId, page: 1, pageSize: STUDENT_ENROLLMENTS }),
   ]);
   const live = new Set(page.items.filter((e) => e.status !== 'withdrawn').map((e) => e.courseOfferingId));
+  const recommended = new Set(placement?.groups.filter((group) => group.recommended).map((group) => group.offeringId));
+  const byFrom = new Map(transfers.items.map((transfer) => [transfer.fromEnrollmentId, transfer]));
   return (
     <>
-      <EnrollForm studentUserId={studentId} offerings={offerings} enrolledOfferingIds={live} />
-      <EnrollmentsTable enrollments={page.items} timeZone={ctx.user.timeZone} showStudent={false} empty="Todavía no tiene matrículas." />
+      {placement && <PlacementSummary placement={placement} />}
+      <EnrollForm studentUserId={studentId} offerings={offerings} enrolledOfferingIds={live} recommendedIds={recommended} />
+      <EnrollmentsTable
+        enrollments={page.items}
+        timeZone={ctx.user.timeZone}
+        showStudent={false}
+        empty="Todavía no tiene matrículas."
+        move={{ offerings, recommendedIds: recommended, heldIds: live }}
+        transfersByFrom={byFrom}
+      />
+      <TransferHistory transfers={transfers.items} timeZone={ctx.user.timeZone} />
     </>
   );
 }

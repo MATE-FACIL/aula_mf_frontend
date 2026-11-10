@@ -75,7 +75,9 @@ const adminCookies = [{ name: 'mf_session', value: admin, url: base }, { name: '
   // Matricular: el grupo en borrador no se puede elegir
   await page.goto(`${base}/admin/usuarios/${bruno.userId}`, { waitUntil: 'networkidle' });
   await settled(page);
-  const draftOption = page.locator(`select[name="courseOfferingId"] option[value="${draft.id}"]`);
+  // El formulario «Matricular» (la ficha también tiene un selector de destino en cada matrícula viva).
+  const enrollForm = page.locator('form', { has: page.getByRole('button', { name: 'Matricular', exact: true }) });
+  const draftOption = enrollForm.locator(`select[name="courseOfferingId"] option[value="${draft.id}"]`);
   check('Admin', 'Matricular: el grupo en borrador aparece deshabilitado', await draftOption.evaluate((option) => option.disabled));
 
   await page.goto(`${base}/admin/cursos`, { waitUntil: 'networkidle' });

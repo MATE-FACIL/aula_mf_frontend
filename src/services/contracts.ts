@@ -43,6 +43,7 @@ import type {
   CreatedInstructor,
   Enrollment,
   EnrollmentFilters,
+  EnrollmentTransfer,
   Instructor,
   IssuedCredentials,
   MathLevel,
@@ -50,10 +51,12 @@ import type {
   NewStudentInput,
   OfferingSeats,
   Page,
+  Placement,
   ProvisionedLevels,
   SaveCourseInput,
   SaveOfferingInput,
   SessionAttendance,
+  TransferFilters,
   UserListFilters,
 } from '@/types/admin';
 import type {
@@ -197,6 +200,15 @@ export interface AdminService {
   enroll(ctx: RequestContext, input: { studentUserId: string; courseOfferingId: string; paymentNote?: string }): Promise<Enrollment>;
   activateEnrollment(ctx: RequestContext, enrollmentId: string, paymentNote?: string): Promise<Enrollment>;
   withdrawEnrollment(ctx: RequestContext, enrollmentId: string): Promise<Enrollment>;
+
+  /**
+   * Asignación a grupo (SCRUM-45). La ubicación ofrece los grupos de Matemáticas con su cupo, los del nivel que el
+   * profesor confirmó en el diagnóstico primero. null si la persona no existe.
+   */
+  getPlacement(ctx: RequestContext, studentUserId: string): Promise<Placement | null>;
+  /** Pasa al alumno a otro grupo: valida el cupo del destino, conserva el estado y deja el cambio registrado. */
+  transferEnrollment(ctx: RequestContext, enrollmentId: string, input: { courseOfferingId: string; reason?: string }): Promise<EnrollmentTransfer>;
+  listTransfers(ctx: RequestContext, filters: TransferFilters): Promise<Page<EnrollmentTransfer>>;
 
   /** Grupos de un curso (SCRUM-41). null si el curso no existe. */
   listOfferings(ctx: RequestContext, courseId: string): Promise<CourseOffering[] | null>;
