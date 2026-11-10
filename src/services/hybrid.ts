@@ -4,6 +4,7 @@ import { httpAdmin } from './http/admin';
 import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
+import { httpDiagnostic } from './http/diagnostic';
 import { httpPractice } from './http/practice';
 import { httpTeacher } from './http/teacher';
 import { fetchStudentAttendance } from './http/student-attendance';
@@ -15,7 +16,8 @@ import { demoUserFor, mockServices } from './mock';
 //    (API_BASE_URL, ej.: http://localhost:5087/api/v1).
 //  - Clases en vivo, calendario y asistencia del alumno, e hijos de la familia con su asistencia → API real
 //    (SCRUM-50/51/52, 53 y 67).
-//  - Práctica del alumno (SCRUM-59/60/61) y panel del profesor (SCRUM-69/70) → API real.
+//  - Práctica del alumno (SCRUM-59/60/61), panel del profesor (SCRUM-69/70) y diagnóstico de entrada
+//    (SCRUM-48/49) → API real.
 //  - El resto de lo que ven el alumno y la familia (lecciones, tareas, tutor…) → datos mock, porque el
 //    backend aún no tiene esos módulos.
 //
@@ -39,6 +41,7 @@ export const hybridServices: Services = {
   admin: httpAdmin,
   practice: httpPractice,
   teacher: httpTeacher,
+  diagnostic: httpDiagnostic,
   students: {
     ...demoStudents,
     // Mock y clases reales en paralelo: una sola espera.

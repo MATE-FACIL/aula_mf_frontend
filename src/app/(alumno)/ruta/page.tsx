@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { PageHeader, PageSkeleton } from '@/components/ui/primitives';
 import { TRACK_COLOR } from '@/config/areas';
@@ -15,6 +16,13 @@ export default function RoutePage() {
         title="Mi ruta de aprendizaje"
         description="Matemáticas es el curso pivote y avanza por nivel. En paralelo, cada mes, un laboratorio de IA, habilidades digitales o programación."
       />
+      <section className="card section">
+        <div className="section-title">
+          <h2>Diagnóstico de entrada</h2>
+          <Link className="btn btn--primary btn--sm" href="/diagnostico">Ir al diagnóstico</Link>
+        </div>
+        <p className="muted small">Unas preguntas para saber desde qué nivel de Matemáticas empiezas. Tu profesor revisa el resultado y confirma tu nivel.</p>
+      </section>
       <Suspense fallback={<PageSkeleton />}>
         <RouteContent />
       </Suspense>

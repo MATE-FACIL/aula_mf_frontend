@@ -2,6 +2,7 @@ import 'server-only';
 import { apiRequest } from '@/lib/http/api-client';
 import type { Services } from '../contracts';
 import { httpAdmin } from './admin';
+import { httpDiagnostic } from './diagnostic';
 import { backendAuth } from './auth';
 import { fetchLiveSchedule } from './classes';
 import { fetchStudentAttendance } from './student-attendance';
@@ -20,6 +21,7 @@ export const httpServices: Services = {
   admin: httpAdmin,
   practice: httpPractice,
   teacher: httpTeacher,
+  diagnostic: httpDiagnostic,
 
   students: {
     getProfile: ({ token }) => apiRequest('/students/me', { token }),

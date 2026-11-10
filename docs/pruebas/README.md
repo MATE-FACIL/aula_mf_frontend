@@ -1,15 +1,16 @@
 # Pruebas del aula
 
-Resultados del 9 de noviembre de 2026 sobre la rama `dev`, con la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 10 de noviembre de 2026 sobre la rama `feature/scrum-48-49-diagnostico`, con el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
-| Unitarias (Vitest) | En memoria | **89 de 89**, en 18 archivos |
+| Unitarias (Vitest) | En memoria | **100 de 100**, en 21 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
 | Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
 | Sesión y renovación | Aula conectada a la API en Docker | **12 de 12** |
 | Práctica y profesor con login real | Aula conectada a la API en Docker | **18 de 18** |
+| Diagnóstico con login real | Aula conectada a la API en Docker | **19 de 19** |
 | Contraste y desborde | Modo mock | 272 combinaciones: 0 problemas |
 | Flujos en celular, tableta y modo oscuro | Modo mock | **38 de 38** |
 
@@ -25,7 +26,7 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 |---|---|---|
 | Administración | Todo | Nada |
 | Familia | Hijos, matrículas, próximas clases, profesores y asistencia | Notificación de la campana |
-| Alumno | Clases en vivo, calendario, enlace para entrar, asistencia y **Mis prácticas** (ejercicios, corrección y avance) | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
+| Alumno | Clases en vivo, calendario, enlace para entrar, asistencia, **Mis prácticas** (ejercicios, corrección y avance) y el **diagnóstico de entrada** | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
 | Profesor | Todo | Nada |
 
 **La sesión de administrador se firmó localmente.** Se usó la clave de desarrollo de Docker, sin pasar por el formulario de ingreso. Los logins de familia, alumno y profesor sí fueron reales, por el formulario.
@@ -114,6 +115,10 @@ Práctica en el celular (SCRUM-61). A la izquierda, un acierto con su explicaci�
 
 <img src="capturas/alumno-04-practica-respuesta-celular.png" alt="Ejercicio respondido con su explicación" width="280"> <img src="capturas/alumno-03-practica-celular.png" alt="Práctica terminada contra la API real" width="280">
 
+Diagnóstico de entrada en el celular (SCRUM-49). A la izquierda, una pregunta con la barra de avance y «No lo sé»; a la derecha, el resultado por tema con el nivel sugerido:
+
+<img src="capturas/alumno-05-diagnostico-celular.png" alt="Pregunta del diagnóstico con barra de avance" width="280"> <img src="capturas/alumno-06-diagnostico-resultado-celular.png" alt="Resultado del diagnóstico con el nivel sugerido" width="280">
+
 ### Profesor
 
 Su grupo en tableta, con las clases, la asistencia y el avance de práctica de cada alumno (SCRUM-70):
@@ -123,6 +128,10 @@ Su grupo en tableta, con las clases, la asistencia y el avance de práctica de c
 Asistencia tras «Todos presentes»: los dos alumnos quedan marcados en el backend y en la lista:
 
 <img src="capturas/profesor-02-asistencia-tableta.png" alt="Asistencia del profesor en tableta" width="420">
+
+Revisión del diagnóstico en tableta (SCRUM-48): el resultado, cada respuesta con la correcta y su explicación, y el nivel ya confirmado (el sistema sugería Básico; el profesor eligió Prebásico):
+
+<img src="capturas/profesor-03-diagnostico-tableta.png" alt="Revisión del diagnóstico en tableta" width="420">
 
 ## Qué se comprobó en el navegador
 
@@ -211,6 +220,28 @@ Asistencia tras «Todos presentes»: los dos alumnos quedan marcados en el backe
 - la lista se actualiza: los 2 aparecen marcados «Asistió»
 - asistencia sin desborde en tableta
 - el backend guardó las 2 marcas
+- sin errores en el navegador
+
+### Diagnóstico de entrada
+
+- mi ruta lleva al diagnóstico
+- diagnóstico: primaria disponible para empezar
+- la prueba llega sin respuestas ni explicaciones
+- empieza en 0 de 4 con su barra de avance
+- sin responder: avisa y no gasta una petición
+- responde sin decir si acertó: solo avanza
+- al terminar: nivel sugerido Básico y resultado por tema
+- diagnóstico sin desborde en el celular
+- el profesor ve el diagnóstico por confirmar
+- el profesor no entra a la pantalla del alumno
+- el alumno no entra a la revisión
+- detalle: cada respuesta, la correcta y la explicación
+- tras confirmar, el selector queda en el nivel guardado
+- la vista del profesor no le habla como alumno, y usa coma decimal
+- revisión sin desborde en tableta
+- el backend guardó el nivel confirmado por el profesor
+- el alumno ve el nivel confirmado
+- el banco de preguntas queda como estaba
 - sin errores en el navegador
 
 ### General

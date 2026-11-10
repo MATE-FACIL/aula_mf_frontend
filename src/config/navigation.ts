@@ -22,6 +22,7 @@ export const STUDENT_NAV: NavItem[] = [
 
 export const TEACHER_NAV: NavItem[] = [
   { href: '/profesor', label: 'Mis grupos', short: 'Grupos', icon: 'courses' },
+  { href: '/profesor/diagnosticos', label: 'Diagnósticos', short: 'Diagnóst.', icon: 'exams' },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
@@ -29,6 +30,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },
   { href: '/admin/familias', label: 'Familias', icon: 'family' },
   { href: '/admin/matriculas', label: 'Matrículas', short: 'Matríc.', icon: 'enrollments' },
+  { href: '/admin/diagnosticos', label: 'Diagnósticos', short: 'Diagnóst.', icon: 'exams' },
   { href: '/admin/cursos', label: 'Cursos', icon: 'courses' },
   { href: '/admin/categorias', label: 'Categorías', short: 'Categ.', icon: 'categories' },
 ];

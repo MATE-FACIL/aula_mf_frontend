@@ -15,7 +15,7 @@ export const HOME_BY_ROLE: Record<Role, string> = {
   admin: '/admin',
 };
 
-export const STUDENT_PATHS = ['/inicio', '/ruta', '/lecciones', '/evaluaciones', '/clases', '/logros'];
+export const STUDENT_PATHS = ['/inicio', '/ruta', '/diagnostico', '/lecciones', '/evaluaciones', '/clases', '/logros'];
 export const FAMILY_PATHS = ['/familia'];
 export const TEACHER_PATHS = ['/profesor'];
 export const ADMIN_PATHS = ['/admin'];
