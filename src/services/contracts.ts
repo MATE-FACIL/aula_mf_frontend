@@ -69,6 +69,7 @@ import type {
   StudentDiagnostic,
 } from '@/types/diagnostic';
 import type { FamilyConsent } from '@/types/consent';
+import type { ContentLesson, ContentUnit, CourseContent, LessonPayload, UploadGrant, UploadKind } from '@/types/content';
 import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
@@ -214,6 +215,25 @@ export interface AdminService {
   /** Pasa al alumno a otro grupo: valida el cupo del destino, conserva el estado y deja el cambio registrado. */
   transferEnrollment(ctx: RequestContext, enrollmentId: string, input: { courseOfferingId: string; reason?: string }): Promise<EnrollmentTransfer>;
   listTransfers(ctx: RequestContext, filters: TransferFilters): Promise<Page<EnrollmentTransfer>>;
+
+  /**
+   * Contenido del curso (SCRUM-71): unidades con sus sesiones, video y materiales. Un video o un material es un
+   * enlace https o un archivo ya subido (`fileId`). null si el curso no existe.
+   */
+  getCourseContent(ctx: RequestContext, courseId: string): Promise<CourseContent | null>;
+  addUnit(ctx: RequestContext, courseId: string, title: string): Promise<ContentUnit>;
+  renameUnit(ctx: RequestContext, courseId: string, unitId: string, title: string): Promise<ContentUnit>;
+  /** Solo una unidad sin sesiones; con sesiones responde 409. */
+  deleteUnit(ctx: RequestContext, courseId: string, unitId: string): Promise<void>;
+  /** `ids`: TODAS las unidades, una vez cada una, en el orden nuevo. */
+  reorderUnits(ctx: RequestContext, courseId: string, ids: string[]): Promise<CourseContent>;
+  addLesson(ctx: RequestContext, courseId: string, unitId: string, input: LessonPayload): Promise<ContentLesson>;
+  /** Con otro `unitId` la sesión pasa al final de esa unidad. */
+  updateLesson(ctx: RequestContext, courseId: string, lessonId: string, unitId: string, input: LessonPayload): Promise<ContentLesson>;
+  deleteLesson(ctx: RequestContext, courseId: string, lessonId: string): Promise<void>;
+  reorderLessons(ctx: RequestContext, courseId: string, unitId: string, ids: string[]): Promise<CourseContent>;
+  /** Permiso para subir un archivo directo al almacenamiento. La sesión tiene que existir antes. */
+  grantLessonUpload(ctx: RequestContext, courseId: string, lessonId: string, request: { kind: UploadKind; contentType: string; size: number }): Promise<UploadGrant>;
 
   /** Grupos de un curso (SCRUM-41). null si el curso no existe. */
   listOfferings(ctx: RequestContext, courseId: string): Promise<CourseOffering[] | null>;

@@ -1,10 +1,10 @@
 # Pruebas del aula
 
-Resultados del 13 de noviembre de 2026 sobre la rama `feature/scrum-38-consentimiento`, con el consentimiento del padre para los datos del menor (SCRUM-38), la asignación a grupo según el diagnóstico (SCRUM-45), el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 13 de noviembre de 2026 sobre la rama `feature/scrum-71-carga-contenido`, con la carga de contenido por el administrador (SCRUM-71), el consentimiento del padre para los datos del menor (SCRUM-38), la asignación a grupo según el diagnóstico (SCRUM-45), el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
-| Unitarias (Vitest) | En memoria | **110 de 110**, en 22 archivos |
+| Unitarias (Vitest) | En memoria | **127 de 127**, en 23 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
 | Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
@@ -13,8 +13,9 @@ Resultados del 13 de noviembre de 2026 sobre la rama `feature/scrum-38-consentim
 | Diagnóstico con login real | Aula conectada a la API en Docker | **19 de 19** |
 | Asignación a grupo y cambio de grupo | Aula conectada a la API en Docker | **16 de 16** |
 | Consentimiento del padre con login real | Aula conectada a la API en Docker | **24 de 24** |
-| Contraste y desborde | Modo mock | 280 combinaciones: 0 problemas |
-| Flujos en celular, tableta y modo oscuro | Modo mock | **45 de 45** |
+| Carga de contenido, con subida de archivos al almacenamiento | Aula conectada a la API en Docker con almacenamiento S3 local | **27 de 27** |
+| Contraste y desborde | Modo mock | 296 combinaciones: 0 problemas |
+| Flujos en celular, tableta y modo oscuro | Modo mock | **61 de 61** |
 
 Las dos pruebas en modo mock pasaron en Edge y en Chromium, el navegador del CI.
 
@@ -26,7 +27,7 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 
 | Pantalla | Datos reales | Datos de ejemplo |
 |---|---|---|
-| Administración | Todo, incluida la asignación a grupo | Nada |
+| Administración | Todo, incluidas la asignación a grupo y la carga de contenido | Nada |
 | Familia | Hijos, matrículas, próximas clases, profesores, asistencia y el **consentimiento de los datos** | Notificación de la campana |
 | Alumno | Clases en vivo, calendario, enlace para entrar, asistencia, **Mis prácticas** (ejercicios, corrección y avance) y el **diagnóstico de entrada** | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
 | Profesor | Todo | Nada |
@@ -82,6 +83,10 @@ Consentimiento del padre en el celular (SCRUM-38). El panel avisa qué hijos fal
 En la ficha de cada alumno, el administrador ve cómo va el consentimiento de su padre (aceptado con fecha y quién, pendiente, o sin padre vinculado):
 
 <img src="capturas/admin-15-consentimiento-ficha-escritorio.png" alt="Ficha del alumno con el consentimiento aceptado" width="420">
+
+Carga de contenido en el celular (SCRUM-71). A la izquierda, el esquema del curso con sus unidades y sesiones (publicadas o en borrador, con ↑ y ↓ para ordenar); a la derecha, el editor de una sesión con su video y materiales como enlace o como archivo subido:
+
+<img src="capturas/admin-16-contenido-esquema-celular.png" alt="Esquema del curso con unidades y sesiones" width="240"> <img src="capturas/admin-17-contenido-sesion-celular.png" alt="Editor de una sesión con video y materiales" width="240">
 
 Resumen, alumno creado y catálogo de cursos:
 
@@ -306,6 +311,36 @@ Revisión del diagnóstico en tableta (SCRUM-48): el resultado, cada respuesta c
 - un padre sin hijos ve un mensaje claro
 - un alumno no entra a la pantalla de la familia
 - sin sesión se pide ingresar
+- sin errores en el navegador
+
+### Carga de contenido
+
+- un curso nuevo no tiene unidades y lo dice
+- se crean las dos unidades, en orden
+- la sesión nueva parte de la unidad desde la que se creó
+- un video con http:// se rechaza y no se pierde lo escrito
+- la sesión se guarda con su video, su material y publicada, y lleva a su pantalla
+- el video se sube y aparece como archivo listo para adjuntar
+- al guardar, el backend adjunta el video subido
+- el archivo está en el almacenamiento y se descarga con el enlace firmado, igual de grande
+- el PDF se sube
+- hasta aquí hay dos archivos en el almacenamiento: el video y el PDF
+- un tipo no permitido se rechaza antes de subir
+- un material de más de 50 MB se rechaza antes de subir
+- y no se subió nada de eso
+- al guardar, el backend adjunta el PDF (con su tamaño) junto al enlace
+- antes de quitarlo, el video está en el almacenamiento
+- quitar el video lo borra de la sesión y del almacenamiento
+- una sesión en borrador se ve como tal
+- subir una sesión cambia el orden en el backend y la numeración
+- subir una unidad la pone primero
+- cambiar la unidad en el editor mueve la sesión y conserva sus archivos
+- el esquema del curso no se desborda en el celular
+- el editor de la sesión no se desborda en el celular
+- borrar una sesión la quita y avisa
+- y se borran también sus archivos del almacenamiento
+- el backend no deja borrar una unidad con sesiones (409)
+- al terminar no queda ningún archivo de la prueba en el almacenamiento
 - sin errores en el navegador
 
 ### General
