@@ -246,6 +246,81 @@ const foreign = await teacher.goto(`${base}/admin`, { waitUntil: 'networkidle' }
 check('la profesora no entra a la administración', teacher.url().endsWith('/profesor'), [foreign?.status(), teacher.url()]);
 await teacherContext.close();
 
+// 11) Carga de contenido (SCRUM-71): unidades y sesiones con video y materiales, sin programar
+await page.goto(`${base}/admin/cursos`, { waitUntil: 'networkidle' });
+await page.getByRole('link', { name: /Secundaria Intermedio/ }).filter({ visible: true }).first().click();
+await page.waitForURL(/\/admin\/cursos\/[0-9a-f-]{36}$/);
+await page.getByRole('link', { name: 'Administrar contenido' }).filter({ visible: true }).click();
+await page.waitForURL(/\/contenido$/);
+const outline = page.locator('main').filter({ visible: true });
+await outline.getByText('Sumar fracciones').first().waitFor({ timeout: 8000 });
+check('contenido: se ven las unidades y sesiones del curso, con su estado', (await outline.innerText()).includes('Fracciones') &&
+  /Publicada/i.test(await outline.innerText()) && /Borrador/i.test(await outline.innerText()));
+check('contenido: una unidad con sesiones no se puede borrar (no ofrece el botón)', (await page.locator('section[aria-label="Unidad Fracciones"]').filter({ visible: true }).getByRole('button', { name: 'Borrar unidad' }).count()) === 0);
+await page.screenshot({ path: join(output, 'contenido-esquema-celular.png'), fullPage: true });
+check('contenido: el esquema no se desborda en el celular', await noScroll());
+
+await page.getByLabel('Nombre de la unidad', { exact: true }).filter({ visible: true }).fill('Geometría');
+await page.getByRole('button', { name: 'Crear unidad' }).filter({ visible: true }).click();
+const geometry = page.locator('section[aria-label="Unidad Geometría"]').filter({ visible: true });
+await geometry.waitFor({ timeout: 8000 });
+check('contenido: la unidad nueva aparece, vacía y con opción de borrarla', (await geometry.innerText()).includes('todavía no tiene sesiones') &&
+  (await geometry.getByRole('button', { name: 'Borrar unidad' }).count()) === 1);
+
+await geometry.getByRole('link', { name: '+ Nueva sesión' }).click();
+await page.waitForURL(/\/sesiones\/nueva\?unidad=/);
+await page.getByLabel('Título de la sesión').filter({ visible: true }).fill('Triángulos');
+await page.getByLabel('Resumen (opcional)').filter({ visible: true }).fill('Clasificación por lados y ángulos');
+await page.getByRole('textbox', { name: 'Video: enlace' }).filter({ visible: true }).fill('http://sitio.com/video');
+await page.getByRole('button', { name: '+ Agregar material' }).filter({ visible: true }).click();
+await page.getByLabel('Título', { exact: true }).filter({ visible: true }).fill('Ficha de triángulos');
+await page.getByRole('textbox', { name: 'Material 1: enlace' }).filter({ visible: true }).fill('https://ejemplo.com/ficha.pdf');
+check('sesión nueva: «Archivo» está apagado hasta guardar la sesión (la sesión tiene que existir)', await page.getByRole('radio', { name: 'Archivo' }).filter({ visible: true }).first().isDisabled());
+await page.getByRole('button', { name: 'Crear sesión' }).filter({ visible: true }).click();
+check('sesión nueva: un video con http:// se rechaza con su mensaje', (await waitForText(page.locator('main').filter({ visible: true }), (t) => t.includes('El video debe ser un enlace https://'))).includes('El video debe ser un enlace https://'));
+check('sesión nueva: tras el error no se pierde lo escrito', (await page.getByLabel('Título de la sesión').filter({ visible: true }).inputValue()) === 'Triángulos' &&
+  (await page.getByRole('textbox', { name: 'Material 1: enlace' }).filter({ visible: true }).inputValue()) === 'https://ejemplo.com/ficha.pdf');
+await page.getByRole('textbox', { name: 'Video: enlace' }).filter({ visible: true }).fill('https://www.youtube.com/watch?v=triangulos');
+await page.getByLabel('Publicada').filter({ visible: true }).check();
+await page.getByRole('button', { name: 'Crear sesión' }).filter({ visible: true }).click();
+await page.waitForURL(/\/sesiones\/[0-9a-f-]{36}\?creada=1$/);
+await page.getByText('Sesión creada. Ahora puedes subir').filter({ visible: true }).waitFor({ timeout: 8000 });
+check('sesión nueva: se crea y lleva a su pantalla, donde ya se pueden subir archivos', await page.getByRole('radio', { name: 'Archivo' }).filter({ visible: true }).first().isEnabled());
+check('sesión nueva: se guardó con su video y su material', (await page.getByLabel('Título de la sesión').filter({ visible: true }).inputValue()) === 'Triángulos' &&
+  (await page.getByRole('textbox', { name: 'Video: enlace' }).filter({ visible: true }).inputValue()).includes('triangulos') && (await page.getByRole('textbox', { name: 'Material 1: enlace' }).filter({ visible: true }).inputValue()) === 'https://ejemplo.com/ficha.pdf');
+
+// Subir un archivo: se revisa el tipo antes de pedir nada; sin almacenamiento (demo) se explica
+await page.getByRole('radiogroup', { name: 'Video: enlace o archivo' }).filter({ visible: true }).getByLabel('Archivo').check();
+const videoInput = page.locator('input[type="file"]').filter({ visible: true }).first();
+await videoInput.setInputFiles({ name: 'virus.exe', mimeType: 'application/x-msdownload', buffer: Buffer.from('MZ') });
+check('subir archivo: un tipo no permitido se rechaza antes de subir', (await waitForText(page.locator('main').filter({ visible: true }), (t) => t.includes('Tipo de archivo no permitido: usa MP4 o WebM'))).includes('Tipo de archivo no permitido: usa MP4 o WebM'));
+await videoInput.setInputFiles({ name: 'clase.mp4', mimeType: 'video/mp4', buffer: Buffer.from('video de prueba') });
+check('subir archivo: en la demo no hay almacenamiento y lo explica', (await waitForText(page.locator('main').filter({ visible: true }), (t) => t.includes('En la demo no hay almacenamiento de archivos'))).includes('En la demo no hay almacenamiento de archivos'));
+await page.screenshot({ path: join(output, 'contenido-sesion-celular.png'), fullPage: true });
+check('sesión: el editor no se desborda en el celular', await noScroll());
+
+// Reordenar: subir «Restar fracciones» al primer lugar de su unidad
+await page.goto(page.url().split('/sesiones/')[0], { waitUntil: 'networkidle' });
+const fractions = page.locator('section[aria-label="Unidad Fracciones"]').filter({ visible: true });
+const firstLesson = () => fractions.locator('ol li').first().innerText();
+check('reordenar: al principio va «Sumar fracciones»', (await firstLesson()).includes('Sumar fracciones'));
+await fractions.getByRole('button', { name: 'Subir la sesión Restar fracciones' }).click();
+await waitForText(fractions.locator('ol li').first(), (t) => t.includes('Restar fracciones'));
+check('reordenar: «Restar fracciones» pasa al primer lugar y la numeración se actualiza', (await firstLesson()).includes('Restar fracciones') && /sesión 1/i.test(await firstLesson()));
+
+// Borrar: la sesión y después su unidad vacía
+await geometry.getByRole('link', { name: 'Triángulos' }).click();
+await page.waitForURL(/\/sesiones\/[0-9a-f-]{36}$/);
+page.once('dialog', (dialog) => dialog.accept());
+await page.getByRole('button', { name: 'Borrar sesión' }).filter({ visible: true }).click();
+await page.waitForURL(/\/contenido\?borrada=1$/);
+await waitForText(page.locator('main').filter({ visible: true }), (t) => t.includes('Sesión borrada.'));
+check('borrar: la sesión desaparece y se avisa', (await page.locator('main').filter({ visible: true }).innerText()).includes('Sesión borrada.') && !(await page.locator('main').filter({ visible: true }).innerText()).includes('Triángulos'));
+page.once('dialog', (dialog) => dialog.accept());
+await page.locator('section[aria-label="Unidad Geometría"]').filter({ visible: true }).getByRole('button', { name: 'Borrar unidad' }).click();
+await page.locator('section[aria-label="Unidad Geometría"]').filter({ visible: true }).waitFor({ state: 'detached', timeout: 8000 });
+check('borrar: la unidad vacía desaparece', (await page.locator('section[aria-label="Unidad Geometría"]').filter({ visible: true }).count()) === 0);
+
 // 10) Consentimiento del padre (SCRUM-38): aviso en el panel, leer, marcar la declaración y aceptar por todos los hijos
 const familyFlow = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 await familyFlow.addCookies([{ name: 'mf_session', value: mockToken('fam-roque', 'family'), url: base }, { name: 'mf_role', value: 'family', url: base }]);

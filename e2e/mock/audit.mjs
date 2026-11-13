@@ -122,11 +122,14 @@ async function discover(role, context) {
   }
   const courseId = await find('/admin/cursos', /href="\/admin\/cursos\/([0-9a-f-]{36})"/);
   const groupId = await find(`/admin/cursos/${courseId}`, new RegExp(`/admin/cursos/${courseId}/grupos/([0-9a-f-]{36})`));
+  const lessonId = await find(`/admin/cursos/${courseId}/contenido`, /sesiones\/([0-9a-f-]{36})/);
   const userId = await find('/admin/usuarios?rol=student', /href="\/admin\/usuarios\/([0-9a-f-]{36})"/);
   const guardianId = await find('/admin/familias', /href="\/admin\/usuarios\/([0-9a-f-]{36})"/);
   await page.close();
   return ['/admin', '/admin/usuarios', '/admin/usuarios/nuevo', `/admin/usuarios/${userId}`, `/admin/usuarios/${guardianId}?buscar=a`, '/admin/familias', '/admin/matriculas',
-    '/admin/cursos', '/admin/cursos/niveles', '/admin/cursos/nuevo', `/admin/cursos/${courseId}`, `/admin/cursos/${courseId}/grupos/nuevo`, `/admin/cursos/${courseId}/grupos/${groupId}`, '/admin/categorias'];
+    '/admin/cursos', '/admin/cursos/niveles', '/admin/cursos/nuevo', `/admin/cursos/${courseId}`, `/admin/cursos/${courseId}/grupos/nuevo`, `/admin/cursos/${courseId}/grupos/${groupId}`, '/admin/categorias',
+    `/admin/cursos/${courseId}/contenido`, `/admin/cursos/${courseId}/contenido/sesiones/nueva`,
+    ...(lessonId ? [`/admin/cursos/${courseId}/contenido/sesiones/${lessonId}`] : [])];
 }
 
 const login = await browser.newContext();

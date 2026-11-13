@@ -37,6 +37,22 @@ export const httpAdmin: AdminService = {
     return apiRequest(`/courses/${enc(courseId)}/cover`, { method: 'PUT', token, body: form, timeoutMs: COVER_UPLOAD_TIMEOUT_MS });
   },
 
+  getCourseContent: ({ token }, courseId) => nullOn404(apiRequest(`/courses/${enc(courseId)}/content`, { token })),
+  addUnit: ({ token }, courseId, title) => apiRequest(`/courses/${enc(courseId)}/content/units`, { method: 'POST', token, body: { title } }),
+  renameUnit: ({ token }, courseId, unitId, title) =>
+    apiRequest(`/courses/${enc(courseId)}/content/units/${enc(unitId)}`, { method: 'PUT', token, body: { title } }),
+  deleteUnit: ({ token }, courseId, unitId) => apiRequest(`/courses/${enc(courseId)}/content/units/${enc(unitId)}`, { method: 'DELETE', token }),
+  reorderUnits: ({ token }, courseId, ids) => apiRequest(`/courses/${enc(courseId)}/content/units/order`, { method: 'PUT', token, body: { ids } }),
+  addLesson: ({ token }, courseId, unitId, input) =>
+    apiRequest(`/courses/${enc(courseId)}/content/units/${enc(unitId)}/lessons`, { method: 'POST', token, body: input }),
+  updateLesson: ({ token }, courseId, lessonId, unitId, input) =>
+    apiRequest(`/courses/${enc(courseId)}/content/lessons/${enc(lessonId)}`, { method: 'PUT', token, body: { unitId, ...input } }),
+  deleteLesson: ({ token }, courseId, lessonId) => apiRequest(`/courses/${enc(courseId)}/content/lessons/${enc(lessonId)}`, { method: 'DELETE', token }),
+  reorderLessons: ({ token }, courseId, unitId, ids) =>
+    apiRequest(`/courses/${enc(courseId)}/content/units/${enc(unitId)}/lessons/order`, { method: 'PUT', token, body: { ids } }),
+  grantLessonUpload: ({ token }, courseId, lessonId, request) =>
+    apiRequest(`/courses/${enc(courseId)}/content/lessons/${enc(lessonId)}/uploads`, { method: 'POST', token, body: request }),
+
   listCategories: ({ token }) => apiRequest('/course-categories', { token }),
   createCategory: ({ token }, name) => apiRequest('/course-categories', { method: 'POST', token, body: { name } }),
   renameCategory: ({ token }, categoryId, name) =>
