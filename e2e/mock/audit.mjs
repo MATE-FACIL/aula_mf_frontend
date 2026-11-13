@@ -111,7 +111,7 @@ const results = [];
 
 async function discover(role, context) {
   if (role === 'student') return ['/inicio', '/ruta', '/lecciones', '/lecciones/practica', `/lecciones/practica/${DEMO_PRACTICE_LESSON}`, '/evaluaciones', '/clases', '/logros'];
-  if (role === 'family') return ['/familia'];
+  if (role === 'family') return ['/familia', '/familia/consentimiento'];
   const page = await context.newPage();
   const find = async (url, re) => { await page.goto(base + url); await page.waitForLoadState('networkidle'); return (await page.content()).match(re)?.[1]; };
   if (role === 'teacher') {

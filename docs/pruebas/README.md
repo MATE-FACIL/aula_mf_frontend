@@ -1,10 +1,10 @@
 # Pruebas del aula
 
-Resultados del 10 de noviembre de 2026 sobre la rama `feature/scrum-45-asignacion-grupo`, con la asignación a grupo según el diagnóstico (SCRUM-45), el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
+Resultados del 13 de noviembre de 2026 sobre la rama `feature/scrum-38-consentimiento`, con el consentimiento del padre para los datos del menor (SCRUM-38), la asignación a grupo según el diagnóstico (SCRUM-45), el diagnóstico de entrada (SCRUM-48 y SCRUM-49), la práctica del alumno (SCRUM-61) y las pantallas del profesor (SCRUM-70). Las capturas y animaciones salen de un navegador real (Microsoft Edge) con el aula conectada a la API .NET y PostgreSQL en Docker. Las personas y los correos son ficticios, y los datos de acceso aparecen difuminados.
 
 | Prueba | Dónde corre | Resultado |
 |---|---|---|
-| Unitarias (Vitest) | En memoria | **103 de 103**, en 21 archivos |
+| Unitarias (Vitest) | En memoria | **110 de 110**, en 22 archivos |
 | Tipos (`tsc`) y lint (ESLint) | Código | Sin errores |
 | Recorrido en navegador real | Aula conectada a la API en Docker | **33 de 33** |
 | Panel de la familia con login real | Aula conectada a la API en Docker | **7 de 7** |
@@ -12,8 +12,9 @@ Resultados del 10 de noviembre de 2026 sobre la rama `feature/scrum-45-asignacio
 | Práctica y profesor con login real | Aula conectada a la API en Docker | **18 de 18** |
 | Diagnóstico con login real | Aula conectada a la API en Docker | **19 de 19** |
 | Asignación a grupo y cambio de grupo | Aula conectada a la API en Docker | **16 de 16** |
-| Contraste y desborde | Modo mock | 272 combinaciones: 0 problemas |
-| Flujos en celular, tableta y modo oscuro | Modo mock | **38 de 38** |
+| Consentimiento del padre con login real | Aula conectada a la API en Docker | **24 de 24** |
+| Contraste y desborde | Modo mock | 280 combinaciones: 0 problemas |
+| Flujos en celular, tableta y modo oscuro | Modo mock | **45 de 45** |
 
 Las dos pruebas en modo mock pasaron en Edge y en Chromium, el navegador del CI.
 
@@ -26,7 +27,7 @@ La lista completa está en [pruebas-unitarias.md](pruebas-unitarias.md). Las pru
 | Pantalla | Datos reales | Datos de ejemplo |
 |---|---|---|
 | Administración | Todo, incluida la asignación a grupo | Nada |
-| Familia | Hijos, matrículas, próximas clases, profesores y asistencia | Notificación de la campana |
+| Familia | Hijos, matrículas, próximas clases, profesores, asistencia y el **consentimiento de los datos** | Notificación de la campana |
 | Alumno | Clases en vivo, calendario, enlace para entrar, asistencia, **Mis prácticas** (ejercicios, corrección y avance) y el **diagnóstico de entrada** | Nombre del saludo («Valentina»), estrellas, la lección de ejemplo de «Lecciones», tareas, notas y avisos |
 | Profesor | Todo | Nada |
 
@@ -72,7 +73,15 @@ Celular y tablet:
 
 <img src="capturas/familia-04-celular-claro.png" alt="Familia en celular, modo claro" width="240"> <img src="capturas/familia-04-celular-oscuro.png" alt="Familia en celular, modo oscuro" width="240"> <img src="capturas/familia-04-tablet-oscuro.png" alt="Familia en tablet, modo oscuro" width="320">
 
+Consentimiento del padre en el celular (SCRUM-38). El panel avisa qué hijos faltan; la pantalla de aceptar muestra el texto, los hijos pendientes y la declaración que hay que marcar; y al aceptar queda registrado con la fecha y quién:
+
+<img src="capturas/familia-05-consentimiento-aviso-celular.png" alt="Aviso del panel de la familia" width="240"> <img src="capturas/familia-06-consentimiento-celular.png" alt="Texto y declaración para aceptar" width="240"> <img src="capturas/familia-07-consentimiento-aceptado-celular.png" alt="Aceptación registrada" width="240">
+
 ### Administración
+
+En la ficha de cada alumno, el administrador ve cómo va el consentimiento de su padre (aceptado con fecha y quién, pendiente, o sin padre vinculado):
+
+<img src="capturas/admin-15-consentimiento-ficha-escritorio.png" alt="Ficha del alumno con el consentimiento aceptado" width="420">
 
 Resumen, alumno creado y catálogo de cursos:
 
@@ -270,6 +279,33 @@ Revisión del diagnóstico en tableta (SCRUM-48): el resultado, cada respuesta c
 - ficha del alumno sin desborde en escritorio
 - ficha del alumno sin desborde en el celular
 - el banco de preguntas queda como estaba
+- sin errores en el navegador
+
+### Consentimiento del padre
+
+- el panel de la madre avisa que falta aceptar, con el nombre de sus dos hijos
+- el aviso no menciona a hijos de otras familias
+- la pantalla muestra el texto vigente sin respuestas ni datos de otros
+- se lee el texto con sus secciones
+- los dos hijos aparecen con «Falta tu aceptación»
+- «Aceptar» está apagado hasta marcar la declaración
+- el botón dice por quién se acepta
+- marcada la declaración, se puede aceptar
+- la pantalla de aceptar no se desborda en el celular
+- queda aceptado por los dos hijos, con fecha y quién
+- el aviso desaparece del panel
+- el backend guardó la aceptación de Ana con su fecha y quién
+- ficha de Ana: Aceptado, cuándo, por quién y la versión
+- ficha de Ana: avisa que el texto es provisional mientras lo sea
+- ficha de Pepe (su padre no aceptó): Pendiente
+- ficha de un alumno sin padre: Sin padre vinculado
+- ficha de un padre: no muestra consentimiento
+- ficha del alumno sin desborde en escritorio
+- el otro padre: Ana ya está aceptada (basta con un padre), falta solo su hijo Pepe
+- y en la pantalla ve a Ana aceptada por la madre y a Pepe pendiente
+- un padre sin hijos ve un mensaje claro
+- un alumno no entra a la pantalla de la familia
+- sin sesión se pide ingresar
 - sin errores en el navegador
 
 ### General

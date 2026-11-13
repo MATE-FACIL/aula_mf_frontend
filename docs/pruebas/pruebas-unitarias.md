@@ -1,6 +1,6 @@
 # Lista de pruebas unitarias
 
-Las 103 pruebas de Vitest, por archivo. Todas pasaron el 10 de noviembre de 2026.
+Las 110 pruebas de Vitest, por archivo. Todas pasaron el 13 de noviembre de 2026.
 
 ## `src/app/manifest.test.ts` (6)
 
@@ -71,6 +71,16 @@ Las 103 pruebas de Vitest, por archivo. Todas pasaron el 10 de noviembre de 2026
 - ayudas → valida niveles y filtros que llegan del navegador
 - ayudas → muestra los decimales con coma
 - ayudas → cuenta en singular y plural
+
+## `src/features/family/consent.test.ts` (7)
+
+- listNames → une los nombres como se dice en español
+- pendingChildren y declarationFor → solo cuenta a los hijos que faltan
+- pendingChildren y declarationFor → la declaración nombra a los hijos por los que se acepta
+- parseAcceptance → acepta una versión y hijos válidos, sin repetidos
+- parseAcceptance → rechaza una versión vacía, larga o que no es texto
+- parseAcceptance → exige al menos un hijo y que cada uno sea un identificador válido
+- parseAcceptance → limita cuántos hijos se aceptan a la vez, igual que el backend
 
 ## `src/features/practice/answer.test.ts` (7)
 

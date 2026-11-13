@@ -68,6 +68,7 @@ import type {
   DiagnosticStageSummary,
   StudentDiagnostic,
 } from '@/types/diagnostic';
+import type { FamilyConsent } from '@/types/consent';
 import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
@@ -167,6 +168,10 @@ export interface FamilyService {
   getMessages(ctx: RequestContext): Promise<ChatMessage[]>;
   sendMessage(ctx: RequestContext, text: string): Promise<ChatMessage>;
   getMembership(ctx: RequestContext): Promise<Membership>;
+  /** Consentimiento del padre para los datos de sus hijos (SCRUM-38): el texto vigente y cómo va cada hijo. */
+  getConsent(ctx: RequestContext): Promise<FamilyConsent>;
+  /** Acepta el texto vigente (`version`) por estos hijos: todos o ninguno. */
+  acceptConsent(ctx: RequestContext, version: string, studentUserIds: string[]): Promise<FamilyConsent>;
 }
 
 /** Panel de administración. Toda operación exige la sesión de un administrador. */

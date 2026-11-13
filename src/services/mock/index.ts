@@ -5,6 +5,7 @@ import { addDaysToKey, formatTime, localDateKey, weekdayOfKey, zonedDateTime } f
 import type { AppNotification, CalendarEvent, ChatMessage, ChildOverview, EvaluationSummary, LiveClass, QuizQuestion, Role, SessionUser, Task } from '@/types/domain';
 import type { RequestContext, Schedule, Services } from '../contracts';
 import { mockAdmin, mockTeacher } from './admin';
+import { mockAcceptConsent, mockGetConsent, type MockChild } from './consent';
 import * as data from './data';
 import { checkFractionAnswer, gradeQuiz } from './grading';
 import { mockDiagnostic } from './diagnostic';
@@ -19,6 +20,12 @@ const SESSION_TTL_SEC = 8 * 60 * 60;
 const QUIZ_GRACE_MS = 10_000;
 
 const delay = () => new Promise((resolve) => setTimeout(resolve, LATENCY_MS));
+
+/** Los hijos de la familia de ejemplo, para el consentimiento. Con identificadores UUID, como los del backend real. */
+const DEMO_CHILDREN: MockChild[] = [
+  { id: 'c0a5e000-0000-4000-8000-000000000001', name: 'Valentina Roque' },
+  { id: 'c0a5e000-0000-4000-8000-000000000002', name: 'Mateo Roque' },
+];
 
 // ─── Estado ────────────────────────────────────────────────────────────
 
@@ -359,6 +366,14 @@ export const mockServices: Services = {
         weeklyAverage: 91,
       };
       return [valentina, mateo];
+    },
+    async getConsent(ctx) {
+      requireRole(ctx, 'family');
+      return mockGetConsent(DEMO_CHILDREN);
+    },
+    async acceptConsent(ctx, version, studentUserIds) {
+      requireRole(ctx, 'family');
+      return mockAcceptConsent(DEMO_CHILDREN, ctx.user.displayName, version, studentUserIds);
     },
     async getMessages(ctx) {
       requireRole(ctx, 'family');

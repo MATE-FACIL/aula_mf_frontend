@@ -1,6 +1,7 @@
 import 'server-only';
 import type { RequestContext, Services } from './contracts';
 import { httpAdmin } from './http/admin';
+import { httpConsent } from './http/consent';
 import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
@@ -63,5 +64,6 @@ export const hybridServices: Services = {
     },
   },
   // Hijos reales del padre (sin datos de ejemplo mezclados: serían de otro niño).
-  family: { ...withDemoUser(mockServices.family), getChildren: fetchChildren },
+  // El consentimiento también es real (SCRUM-38): se acepta por los hijos reales de la sesión.
+  family: { ...withDemoUser(mockServices.family), getChildren: fetchChildren, ...httpConsent },
 };

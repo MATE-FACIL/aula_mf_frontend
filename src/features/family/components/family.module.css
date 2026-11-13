@@ -29,3 +29,25 @@
 .rows { display: grid; gap: .55rem; }
 .rows li { display: grid; gap: .1rem; min-width: 0; }
 .rows small { color: var(--tx2); font-size: .82rem; }
+
+/* Consentimiento del padre (SCRUM-38). Una columna en el celular; los toques miden al menos 44 px. */
+.consentBanner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; padding: .8rem 1rem; margin-bottom: 1rem; background: var(--aviso-fondo); border: var(--borde-fino); border-radius: .9rem; }
+.consentBanner p { min-width: 0; flex: 1 1 16rem; overflow-wrap: anywhere; }
+.consent { background: var(--sup); border: var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: clamp(1rem, 3vw, 1.6rem); display: grid; gap: 1.1rem; min-width: 0; max-width: 46rem; }
+.consentHead { display: grid; gap: .5rem; }
+.consentNote { background: var(--aviso-fondo); border-radius: .7rem; padding: .6rem .8rem; font-size: .9rem; font-weight: 700; }
+.consentSection { display: grid; gap: .4rem; }
+.consentSection h3 { font-size: 1.05rem; }
+.consentSection p { line-height: 1.55; overflow-wrap: anywhere; }
+.consentChildren { display: grid; gap: .5rem; }
+.consentChildren li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .3rem .8rem; padding: .6rem .8rem; border: var(--borde-fino); border-radius: .8rem; }
+.consentBadge { border-radius: 99px; padding: .15rem .65rem; font-size: .8rem; font-weight: 800; }
+.consentOk { background: color-mix(in srgb, var(--ok) 15%, var(--sup)); color: var(--ok); }
+.consentWaiting { background: var(--aviso-fondo); color: var(--aviso); }
+.consentForm { display: grid; gap: .8rem; padding-top: .4rem; border-top: var(--borde-fino); }
+.consentCheck { display: flex; align-items: flex-start; gap: .7rem; min-height: 2.75rem; font-weight: 700; line-height: 1.4; cursor: pointer; }
+.consentCheck input { width: 1.3rem; height: 1.3rem; margin-top: .1rem; flex: none; accent-color: var(--acento); }
+.consentCheck:has(input:focus-visible) { outline: 3px solid var(--acento); outline-offset: 2px; border-radius: .5rem; }
+.consentForm :global(.btn) { justify-self: start; min-height: 2.9rem; max-width: 100%; white-space: normal; }
+.consentError { color: var(--error); font-weight: 800; }
+.consentDone { display: grid; gap: .7rem; justify-items: start; padding: 1rem; border-radius: .9rem; background: color-mix(in srgb, var(--ok) 12%, var(--sup)); }
