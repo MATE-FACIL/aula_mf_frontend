@@ -11,7 +11,7 @@ const SUITES = {
   real: {
     port: '3124',
     env: { API_MODE: 'hybrid', API_BASE_URL: `http://localhost:${process.env.API_PORT ?? '5087'}/api/v1` },
-    scripts: ['real/walkthrough', 'real/family', 'real/session', 'real/practice-teacher', 'real/diagnostic', 'real/assignment', 'real/consent'],
+    scripts: ['real/walkthrough', 'real/family', 'real/session', 'real/practice-teacher', 'real/diagnostic', 'real/assignment', 'real/consent', 'real/content'],
   },
 };
 const suite = SUITES[process.argv[2]];

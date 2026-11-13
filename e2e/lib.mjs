@@ -1,5 +1,6 @@
 // Utilidades de las pruebas en navegador. Se corren con `pnpm e2e:mock` o `pnpm e2e:real`; ver docs/pruebas/README.md.
 import { execFileSync } from 'node:child_process';
+import http from 'node:http';
 import { createHmac, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -137,4 +138,52 @@ export async function submitLogin(fields) {
 export async function getPage(path, cookies) {
   const res = await fetch(base + path, { headers: { cookie: cookieHeader(cookies) }, redirect: 'manual' });
   return { status: res.status, location: res.headers.get('location'), set: cookiesFrom(res), html: (await res.text()).replaceAll('<!-- -->', '') };
+}
+
+// ── Almacenamiento local (RustFS): subida directa y limpieza ───────────────────────────────────────
+// Necesita: docker compose -f docker-compose.yml -f docker-compose.storage.yml up -d --build (en el backend).
+// Las pruebas que suben archivos los borran al terminar y comprueban que no quedó nada (el almacenamiento local
+// vive en memoria, pero así lo dejamos igual que lo encontramos).
+const storageCompose = ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.storage.yml', 'exec', '-T', 's3', 'sh', '-c'];
+const storageCredentials = `${process.env.LOCAL_S3_ACCESS_KEY || 'aula-local'}:${process.env.LOCAL_S3_SECRET_KEY || 'aula-local-secret'}`;
+const signedCurl = (args) => `curl -s --aws-sigv4 "aws:amz:us-east-1:s3" --user "${storageCredentials}" ${args}`;
+
+/** Argumento de Chromium para llegar al almacenamiento local: la firma incluye el nombre `host.docker.internal`. */
+export const STORAGE_HOST_RULE = '--host-resolver-rules=MAP host.docker.internal 127.0.0.1';
+
+/** Claves de los objetos bajo `prefix` en los dos buckets locales. */
+export function storageKeys(prefix) {
+  const keys = [];
+  for (const bucket of ['aula-private', 'aula-public']) {
+    const xml = execFileSync('docker', [...storageCompose,
+      signedCurl(`"http://localhost:9000/${bucket}?list-type=2&prefix=${encodeURIComponent(prefix)}"`)],
+    { cwd: backendDir, encoding: 'utf8' });
+    for (const [, key] of xml.matchAll(/<Key>([^<]+)<\/Key>/g)) keys.push({ bucket, key });
+  }
+  return keys;
+}
+
+/** Borra todo lo que haya bajo `prefix`. Devuelve cuántos objetos encontró. */
+export function deleteStorageKeys(prefix) {
+  const found = storageKeys(prefix);
+  for (const { bucket, key } of found) {
+    execFileSync('docker', [...storageCompose, signedCurl(`-X DELETE "http://localhost:9000/${bucket}/${key}"`)], { cwd: backendDir });
+  }
+  return found.length;
+}
+
+/** Descarga con un enlace firmado: la firma cubre el nombre del servidor, así que solo la conexión va a 127.0.0.1. */
+export function storageGet(url) {
+  return new Promise((resolve, reject) => {
+    const request = http.request(new URL(url), {
+      method: 'GET',
+      lookup: (hostname, options, callback) => (options?.all ? callback(null, [{ address: '127.0.0.1', family: 4 }]) : callback(null, '127.0.0.1', 4)),
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks) }));
+    });
+    request.on('error', reject);
+    request.end();
+  });
 }

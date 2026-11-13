@@ -1,6 +1,6 @@
 # Lista de pruebas unitarias
 
-Las 110 pruebas de Vitest, por archivo. Todas pasaron el 13 de noviembre de 2026.
+Las 127 pruebas de Vitest, por archivo. Todas pasaron el 13 de noviembre de 2026.
 
 ## `src/app/manifest.test.ts` (6)
 
@@ -60,6 +60,26 @@ Las 110 pruebas de Vitest, por archivo. Todas pasaron el 13 de noviembre de 2026
 - parseTransferForm (SCRUM-45) → limpia el motivo y lo omite si queda vacío
 - parseTransferForm (SCRUM-45) → exige una matrícula y un grupo de destino válidos
 - parseTransferForm (SCRUM-45) → rechaza un motivo demasiado largo (igual que el backend)
+
+## `src/features/content/rules.test.ts` (17)
+
+- parseHttpsLink → acepta https, deja vacío sin enlace y rechaza http y otros
+- fileProblem (igual que el backend) → acepta los tipos permitidos de cada clase
+- fileProblem (igual que el backend) → un video no es un material y un material no es un video
+- fileProblem (igual que el backend) → respeta los máximos (50 MB un material, 2 GB un video) y no deja pasar un archivo vacío
+- fileProblem (igual que el backend) → deduce el tipo de la extensión cuando el sistema no lo informa
+- fileProblem (igual que el backend) → muestra los tamaños de forma legible
+- moveInOrder → sube o baja un elemento y devuelve el orden nuevo completo
+- moveInOrder → no mueve más allá de los bordes ni un elemento que no existe
+- moveInOrder → no cambia la lista original
+- parseUnitTitle → limpia espacios y exige un nombre
+- parseLessonForm → arma una sesión con enlace de video y materiales, e ignora las filas vacías
+- parseLessonForm → sin marcar «publicada» queda en borrador, y el resumen y el video son opcionales
+- parseLessonForm → un video subido como archivo
+- parseLessonForm → exige unidad y título, y limita su largo
+- parseLessonForm → el video es un enlace https o un archivo, nunca los dos
+- parseLessonForm → cada material necesita título y un enlace o un archivo, y el error dice cuál
+- parseLessonForm → limita la cantidad de materiales (igual que el backend)
 
 ## `src/features/diagnostic/rules.test.ts` (8)
 

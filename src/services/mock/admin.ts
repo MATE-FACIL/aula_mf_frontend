@@ -2,6 +2,7 @@ import 'server-only';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { ApiError } from '@/lib/http/errors';
 import { MOCK_CONSENT_TEXT } from './consent';
+import { createMockContent } from './content';
 import { diagnosticsOf } from './diagnostic';
 import type {
   AccountStatus,
@@ -402,6 +403,12 @@ const toSessions = (input: SaveOfferingInput) =>
   input.sessions.map((s) => ({ id: s.id ?? randomUUID(), startsAt: s.startsAt, endsAt: s.endsAt, virtualLink: s.virtualLink }));
 
 export const mockAdmin: AdminService = {
+  // Contenido de los cursos (SCRUM-71): sesiones, enlaces y borradores; sin archivos (no hay almacenamiento en la demo).
+  ...createMockContent({
+    titleOf: (courseId) => store().courses.find((c) => c.id === courseId)?.title ?? null,
+    guard: requireAdmin,
+  }),
+
   async getSummary(ctx) {
     requireAdmin(ctx);
     await delay();

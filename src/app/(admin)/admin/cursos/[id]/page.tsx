@@ -67,6 +67,11 @@ async function CourseEditor({ params, searchParams }: PageProps<'/admin/cursos/[
       </div>
 
       <section className="card section">
+        <SectionTitle title="Contenido" action={<Link className="btn btn--sm btn--primary" href={`/admin/cursos/${course.id}/contenido`}>Administrar contenido</Link>} />
+        <p className="muted small">Las unidades y sesiones del curso, con su video y materiales (enlaces o archivos). No hace falta programar.</p>
+      </section>
+
+      <section className="card section">
         <SectionTitle title="Grupos" action={<Link className="btn btn--sm btn--primary" href={`/admin/cursos/${course.id}/grupos/nuevo`}>+ Nuevo grupo</Link>} />
         {/* Se carga aparte: el formulario del curso no espera a los grupos. */}
         <Suspense fallback={<Skeleton height="8rem" />}>
