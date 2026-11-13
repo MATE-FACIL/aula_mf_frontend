@@ -246,6 +246,39 @@ const foreign = await teacher.goto(`${base}/admin`, { waitUntil: 'networkidle' }
 check('la profesora no entra a la administración', teacher.url().endsWith('/profesor'), [foreign?.status(), teacher.url()]);
 await teacherContext.close();
 
+// 10) Consentimiento del padre (SCRUM-38): aviso en el panel, leer, marcar la declaración y aceptar por todos los hijos
+const familyFlow = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+await familyFlow.addCookies([{ name: 'mf_session', value: mockToken('fam-roque', 'family'), url: base }, { name: 'mf_role', value: 'family', url: base }]);
+await familyFlow.addInitScript(() => { if (!localStorage.getItem('mf-tema')) localStorage.setItem('mf-tema', 'oscuro'); });
+const mom = await familyFlow.newPage();
+mom.on('pageerror', (e) => errors.push(e.message));
+await mom.goto(`${base}/familia`, { waitUntil: 'networkidle' });
+const banner = mom.getByRole('complementary', { name: 'Consentimiento pendiente' });
+await banner.waitFor({ timeout: 8000 });
+check('familia: el panel avisa que falta aceptar, con el nombre de los dos hijos', /Falta tu aceptación/.test(await banner.innerText()) &&
+  (await banner.innerText()).includes('Valentina Roque y Mateo Roque'), await banner.innerText());
+await mom.getByRole('link', { name: 'Leer y aceptar' }).click();
+await mom.waitForURL(/\/familia\/consentimiento$/);
+const consent = mom.locator('article[aria-labelledby="consent-title"]');
+await consent.waitFor({ timeout: 8000 });
+check('familia: se lee el texto con sus secciones y los dos hijos pendientes', (await consent.locator('h3').count()) >= 3 &&
+  (await consent.getByText('Falta tu aceptación').count()) === 2, await consent.locator('h3').count());
+const accept = mom.getByRole('button', { name: /^Aceptar por/ });
+check('familia: «Aceptar» está apagado hasta marcar la declaración', await accept.isDisabled());
+await mom.getByRole('checkbox').check();
+check('familia: marcada la declaración, se puede aceptar', await accept.isEnabled());
+await mom.screenshot({ path: join(output, 'familia-consentimiento-celular.png'), fullPage: true });
+check('familia: la pantalla de aceptar no se desborda en el celular', await noHorizontalScroll(mom));
+await accept.click();
+await waitForText(consent, (t) => t.includes('Quedó registrada tu aceptación'));
+const after = await consent.innerText();
+check('familia: queda aceptado por los dos hijos, con fecha y quién', after.includes('Quedó registrada tu aceptación') && (after.match(/Aceptado el/g) ?? []).length === 2, after.slice(-300));
+await mom.getByRole('link', { name: 'Volver al panel de la familia' }).click();
+await mom.waitForURL(/\/familia$/);
+await mom.getByRole('tab').first().waitFor({ timeout: 8000 });
+check('familia: el aviso desaparece del panel', (await mom.getByRole('complementary', { name: 'Consentimiento pendiente' }).count()) === 0);
+await familyFlow.close();
+
 check('sin errores en consola', errors.length === 0, errors.slice(0, 3).join(' | '));
 await browser.close();
 finish();

@@ -6,6 +6,7 @@ import { EmptyState, PageSkeleton, SectionTitle, Skeleton } from '@/components/u
 import { linkStudentAction, setUserActiveAction, unlinkStudentAction } from '@/features/admin/actions';
 import { ActionForm, SubmitButton } from '@/features/admin/components/action-form';
 import styles from '@/features/admin/components/admin.module.css';
+import { ConsentStatus } from '@/features/admin/components/consent-status';
 import { EnrollForm, EnrollmentsTable } from '@/features/admin/components/enrollments';
 import { PlacementSummary, TransferHistory } from '@/features/admin/components/placement';
 import { RoleBadges, StatusBadge } from '@/features/admin/components/users-table';
@@ -67,6 +68,7 @@ async function UserDetail({ params, searchParams }: PageProps<'/admin/usuarios/[
           <section className="card section">
             <SectionTitle title="Padres o tutores" />
             <LinkedList people={user.guardians} empty="Sin padre o tutor vinculado. Vincúlalo desde la ficha del padre." unlink={(guardian) => ({ guardianId: guardian.id, studentId: user.id })} />
+            {user.consent && <ConsentStatus consent={user.consent} timeZone={tz} />}
           </section>
         )}
       </div>

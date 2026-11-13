@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { EmptyState, PageHeader, PageSkeleton } from '@/components/ui/primitives';
 import { Tabs } from '@/components/ui/tabs';
 import { ChildReport } from '@/features/family/components/child-report';
+import { ConsentBanner } from '@/features/family/components/consent-banner';
 import type { MessageView } from '@/features/family/components/message-thread';
 import { PrintButton } from '@/features/family/components/print-button';
 import { formatTime, formatWeekdayDay } from '@/lib/time';
@@ -31,10 +32,11 @@ export default function FamilyPage() {
 
 async function FamilyContent() {
   const ctx = await requireSession('family');
-  const [children, messages, membership] = await Promise.all([
+  const [children, messages, membership, consent] = await Promise.all([
     services.family.getChildren(ctx),
     services.family.getMessages(ctx),
     services.family.getMembership(ctx),
+    services.family.getConsent(ctx),
   ]);
   if (children.length === 0) {
     return <EmptyState>Todavía no hay hijos vinculados a tu cuenta. Escríbenos y los agregamos.</EmptyState>;
@@ -50,14 +52,17 @@ async function FamilyContent() {
   }));
 
   return (
-    <Tabs
-      label="Elegir hijo"
-      variant="pills"
-      items={children.map((child) => ({
-        id: child.id,
-        label: childLabel(child),
-        panel: <ChildReport child={child} messages={messageViews} membership={membership} timeZone={tz} />,
-      }))}
-    />
+    <>
+      <ConsentBanner consent={consent} />
+      <Tabs
+        label="Elegir hijo"
+        variant="pills"
+        items={children.map((child) => ({
+          id: child.id,
+          label: childLabel(child),
+          panel: <ChildReport child={child} messages={messageViews} membership={membership} timeZone={tz} />,
+        }))}
+      />
+    </>
   );
 }

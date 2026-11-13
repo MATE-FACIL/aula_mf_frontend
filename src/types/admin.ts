@@ -29,6 +29,19 @@ export interface AdminLinkedUser {
   status: AccountStatus;
 }
 
+/** `no_guardian`: el alumno no tiene padre vinculado, así que nadie puede dar el consentimiento. */
+export type AdminConsentStatus = 'accepted' | 'pending' | 'no_guardian';
+
+/** Cómo va el consentimiento del padre para los datos del alumno, con el texto vigente (SCRUM-38). */
+export interface AdminConsent {
+  status: AdminConsentStatus;
+  currentVersion: string;
+  /** true hasta que el dueño valide el texto legal. */
+  isProvisional: boolean;
+  acceptedAt: string | null;
+  acceptedByName: string | null;
+}
+
 export interface AdminUserDetail {
   id: string;
   givenNames: string;
@@ -45,6 +58,8 @@ export interface AdminUserDetail {
   lastLoginAt: string | null;
   students: AdminLinkedUser[];
   guardians: AdminLinkedUser[];
+  /** Solo para alumnos; null para cualquier otra persona. */
+  consent: AdminConsent | null;
 }
 
 export interface Page<T> {

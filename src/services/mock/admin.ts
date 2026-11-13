@@ -1,9 +1,11 @@
 import 'server-only';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { ApiError } from '@/lib/http/errors';
+import { MOCK_CONSENT_TEXT } from './consent';
 import { diagnosticsOf } from './diagnostic';
 import type {
   AccountStatus,
+  AdminConsent,
   AdminCourse,
   AdminLinkedUser,
   AdminUserDetail,
@@ -321,6 +323,16 @@ const enrollmentStore = () => (globalForEnrollments.__mfMockEnrollments ??= crea
 const takenSeats = (offeringId: string) =>
   enrollmentStore().enrollments.filter((e) => e.courseOfferingId === offeringId && e.status !== 'withdrawn').length;
 
+/** Demo: sin padre vinculado nadie puede dar el consentimiento; el padre de Valentina ya aceptó y los demás están pendientes. */
+function consentOf(student: Person, guardians: Person[]): AdminConsent {
+  const base = { currentVersion: MOCK_CONSENT_TEXT.version, isProvisional: MOCK_CONSENT_TEXT.isProvisional };
+  if (guardians.length === 0) return { ...base, status: 'no_guardian', acceptedAt: null, acceptedByName: null };
+  if (student.givenNames === 'Valentina') {
+    return { ...base, status: 'accepted', acceptedAt: new Date(Date.now() - 5 * 86_400_000).toISOString(), acceptedByName: fullName(guardians[0]) };
+  }
+  return { ...base, status: 'pending', acceptedAt: null, acceptedByName: null };
+}
+
 function toEnrollment(e: MockEnrollment): Enrollment {
   const people = store().people;
   const nameOf = (id: string | null) => {
@@ -430,6 +442,7 @@ export const mockAdmin: AdminService = {
       ...toListItem(p),
       givenNames: p.givenNames, firstSurname: p.firstSurname, secondSurname: p.secondSurname, documentType: p.documentType,
       students: students.map(toLinked), guardians: guardians.map(toLinked),
+      consent: p.roles.includes('student') ? consentOf(p, guardians) : null,
     };
     return detail;
   },

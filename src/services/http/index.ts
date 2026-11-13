@@ -6,6 +6,7 @@ import { httpDiagnostic } from './diagnostic';
 import { backendAuth } from './auth';
 import { fetchLiveSchedule } from './classes';
 import { fetchStudentAttendance } from './student-attendance';
+import { httpConsent } from './consent';
 import { fetchChildren } from './family';
 import { httpPractice } from './practice';
 import { httpTeacher } from './teacher';
@@ -71,5 +72,6 @@ export const httpServices: Services = {
     getMessages: async () => [],
     sendMessage: ({ token }, text) => apiRequest('/families/me/messages', { method: 'POST', token, body: { text } }),
     getMembership: async () => ({ plan: 'Por confirmar', detail: '', renewalLabel: '—', price: null }),
+    ...httpConsent,
   },
 };
