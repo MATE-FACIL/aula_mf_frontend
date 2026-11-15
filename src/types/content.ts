@@ -60,3 +60,14 @@ export interface UploadGrant {
   expiresAt: string;
   maxBytes: number;
 }
+
+/** Un curso del alumno con sus sesiones PUBLICADAS (SCRUM-56). `kind`: Matemáticas si el curso es un nivel; si no, laboratorio. */
+export interface StudentCourseContent {
+  courseId: string;
+  courseTitle: string;
+  offeringName: string;
+  kind: 'math' | 'lab';
+  /** «Primaria · Básico» en un nivel de Matemáticas. */
+  levelLabel: string | null;
+  content: CourseContent;
+}

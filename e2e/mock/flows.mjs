@@ -169,6 +169,12 @@ const studentPage = await (async () => {
   return p;
 })();
 await studentPage.goto(`${base}/lecciones`, { waitUntil: 'networkidle' });
+// SCRUM-56: selector Matemáticas / Laboratorio y pestañas de la sesión
+check('lecciones: abre en Matemáticas con sus tres pestañas', await studentPage.getByRole('button', { name: /Matemáticas/ }).getAttribute('aria-pressed') === 'true'
+  && (await studentPage.getByRole('tab').filter({ visible: true }).count()) === 3);
+await studentPage.getByRole('button', { name: /Laboratorio/ }).click();
+check('lecciones: el selector cambia al laboratorio', await studentPage.getByRole('heading', { name: 'Crea tu primer personaje' }).isVisible());
+await studentPage.getByRole('button', { name: /Matemáticas/ }).click();
 await studentPage.getByRole('link', { name: 'Mis prácticas' }).click();
 await studentPage.waitForURL(/\/lecciones\/practica$/);
 const lessonLink = studentPage.getByRole('link', { name: /Sumar fracciones/ }).filter({ visible: true }).first();

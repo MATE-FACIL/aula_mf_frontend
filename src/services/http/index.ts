@@ -9,6 +9,7 @@ import { fetchStudentAttendance } from './student-attendance';
 import { httpConsent } from './consent';
 import { fetchChildren } from './family';
 import { httpPractice } from './practice';
+import { httpStudentContent } from './student-content';
 import { httpTeacher } from './teacher';
 import { enc } from './shared';
 
@@ -23,6 +24,7 @@ export const httpServices: Services = {
   practice: httpPractice,
   teacher: httpTeacher,
   diagnostic: httpDiagnostic,
+  studentContent: httpStudentContent,
 
   students: {
     getProfile: ({ token }) => apiRequest('/students/me', { token }),

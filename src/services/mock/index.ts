@@ -10,6 +10,7 @@ import * as data from './data';
 import { checkFractionAnswer, gradeQuiz } from './grading';
 import { mockDiagnostic } from './diagnostic';
 import { mockPractice } from './practice';
+import { mockStudentContent } from './student-content';
 import { tutorReply } from './tutor-engine';
 
 // Implementación EN MEMORIA de los contratos, para trabajar el frontend sin la API .NET.
@@ -397,4 +398,5 @@ export const mockServices: Services = {
   practice: mockPractice,
   teacher: mockTeacher,
   diagnostic: mockDiagnostic,
+  studentContent: mockStudentContent,
 };

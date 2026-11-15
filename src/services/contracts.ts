@@ -70,6 +70,7 @@ import type {
 } from '@/types/diagnostic';
 import type { FamilyConsent } from '@/types/consent';
 import type { ContentLesson, ContentUnit, CourseContent, LessonPayload, UploadGrant, UploadKind } from '@/types/content';
+import type { StudentCourseContent } from '@/types/content';
 import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
@@ -297,6 +298,11 @@ export interface DiagnosticService {
   confirm(ctx: RequestContext, attemptId: string, level: string): Promise<DiagnosticReview>;
 }
 
+/** Lecciones reales del alumno (SCRUM-56): sus cursos con las sesiones publicadas, video y materiales. */
+export interface StudentContentService {
+  listCourses(ctx: RequestContext): Promise<StudentCourseContent[]>;
+}
+
 export interface Services {
   auth: AuthService;
   students: StudentService;
@@ -310,4 +316,5 @@ export interface Services {
   practice: PracticeService;
   teacher: TeacherService;
   diagnostic: DiagnosticService;
+  studentContent: StudentContentService;
 }
