@@ -7,6 +7,7 @@ import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
 import { httpDiagnostic } from './http/diagnostic';
 import { httpPractice } from './http/practice';
+import { httpStudentContent } from './http/student-content';
 import { httpTeacher } from './http/teacher';
 import { fetchStudentAttendance } from './http/student-attendance';
 import { upcoming } from './http/live-schedule';
@@ -43,6 +44,7 @@ export const hybridServices: Services = {
   practice: httpPractice,
   teacher: httpTeacher,
   diagnostic: httpDiagnostic,
+  studentContent: httpStudentContent,
   students: {
     ...demoStudents,
     // Mock y clases reales en paralelo: una sola espera.
