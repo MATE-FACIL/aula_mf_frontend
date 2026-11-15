@@ -37,6 +37,12 @@ const luisLogin = await submitLogin({ username: luis.loginIdentifier, password: 
 page = await get('/lecciones', luisLogin.cookies);
 check('sin matrícula activa: sin lecciones ni datos del curso', page.status === 200 && page.html.includes('Todavía no tienes lecciones') && !page.html.includes(`Sumar fracciones ${tag}`), page.status);
 
+// ─── Mi ruta (SCRUM-57) ────────────────────────────────────────────────
+page = await get('/ruta', anaLogin.cookies);
+check('Mi ruta: las sesiones reales del curso, la primera como «Continuar» y sin el borrador', page.status === 200 && page.html.includes(`Sumar fracciones ${tag}`) && page.html.includes(`Restar fracciones ${tag}`) && page.html.includes('Continuar') && !page.html.includes('Borrador secreto'), page.status);
+page = await get('/ruta', luisLogin.cookies);
+check('Mi ruta sin matrícula: avisa que no hay sesiones y no muestra el curso', page.status === 200 && page.html.includes('Todavía no hay sesiones publicadas') && !page.html.includes(`Sumar fracciones ${tag}`), page.status);
+
 // ─── Navegador (celular) ───────────────────────────────────────────────
 const browser = await launch();
 const cookiesFor = (cookies) => Object.entries(cookies).map(([name, value]) => ({ name, value, url: base }));

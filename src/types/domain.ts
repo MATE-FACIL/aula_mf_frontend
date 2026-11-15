@@ -38,7 +38,8 @@ export interface StudentProfile {
   lab: { name: string; area: LabArea; month: string; progress: number };
 }
 
-export type LessonStatus = 'done' | 'current' | 'locked';
+/** `open`: publicada y por hacer, sin ser la siguiente (el alumno puede abrirla cuando quiera). */
+export type LessonStatus = 'done' | 'current' | 'open' | 'locked';
 
 export interface LessonSummary {
   id: string;

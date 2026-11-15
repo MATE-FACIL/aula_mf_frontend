@@ -7,6 +7,7 @@ import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
 import { httpDiagnostic } from './http/diagnostic';
 import { httpPractice } from './http/practice';
+import { buildLearningPath } from './http/learning-path';
 import { httpStudentContent } from './http/student-content';
 import { httpTeacher } from './http/teacher';
 import { fetchStudentAttendance } from './http/student-attendance';
@@ -51,6 +52,11 @@ export const hybridServices: Services = {
     async getDashboard(ctx) {
       const [dashboard, live] = await Promise.all([demoStudents.getDashboard(ctx), fetchLiveSchedule(ctx)]);
       return { ...dashboard, classes: upcoming(live.classes, Date.now()) };
+    },
+    // Mi ruta (SCRUM-57): nivel, avance y sesiones reales; frecuencia y laboratorios del año siguen de ejemplo.
+    async getLearningPath(ctx) {
+      const [base, courses, practice] = await Promise.all([demoStudents.getLearningPath(ctx), httpStudentContent.listCourses(ctx), httpPractice.listCourses(ctx)]);
+      return buildLearningPath(base, courses, practice);
     },
   },
   notifications: withDemoUser(mockServices.notifications),
