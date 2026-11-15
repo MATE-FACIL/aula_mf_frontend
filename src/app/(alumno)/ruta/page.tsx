@@ -54,13 +54,17 @@ async function RouteContent() {
         <section className="section">
           <h2>Matemáticas · {mathUnit.level}</h2>
           <p><b>Unidad: {mathUnit.name}</b></p>
-          <LessonList lessons={mathUnit.lessons} color={TRACK_COLOR.math} />
+          {mathUnit.lessons.length === 0
+            ? <p className="muted small">Todavía no hay sesiones publicadas en tu curso de Matemáticas.</p>
+            : <LessonList lessons={mathUnit.lessons} color={TRACK_COLOR.math} />}
           {mathUnit.nextUnits && <p className="muted small">Siguientes unidades: {mathUnit.nextUnits}.</p>}
         </section>
         <section className="section">
-          <h2>Lab de {labUnit.month?.toLowerCase()} · {labUnit.area}</h2>
+          <h2>{labUnit.month ? `Lab de ${labUnit.month.toLowerCase()} · ${labUnit.area}` : 'Laboratorio'}</h2>
           <p><b>{labUnit.name} · 1 lección por semana</b></p>
-          <LessonList lessons={labUnit.lessons} color={TRACK_COLOR.lab} href="/lecciones?ruta=lab" />
+          {labUnit.lessons.length === 0
+            ? <p className="muted small">Todavía no hay sesiones publicadas en tu laboratorio.</p>
+            : <LessonList lessons={labUnit.lessons} color={TRACK_COLOR.lab} href="/lecciones?ruta=lab" />}
           {labUnit.nextUnits && <p className="muted small">{labUnit.nextUnits}.</p>}
         </section>
       </div>

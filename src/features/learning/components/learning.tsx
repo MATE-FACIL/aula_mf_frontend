@@ -63,7 +63,7 @@ export function LessonList({ lessons, color, href = '/lecciones' }: { lessons: L
         <li key={l.id} className={cn(styles.lesson, styles[`lesson_${l.status}`])}>
           <span className={styles.lessonNum} aria-hidden="true">{l.status === 'done' ? '✓' : l.status === 'locked' ? '🔒' : i + 1}</span>
           <div className={styles.lessonText}>
-            {l.status === 'current' ? <Link href={href}><b>{l.title}</b></Link> : <b>{l.title}</b>}
+            {l.status === 'current' || l.status === 'open' ? <Link href={href}><b>{l.title}</b></Link> : <b>{l.title}</b>}
             <small>
               {l.duration}
               {l.status === 'done' && l.stars ? ` · ${'⭐'.repeat(l.stars)}` : ''}
