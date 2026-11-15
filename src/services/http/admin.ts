@@ -38,6 +38,10 @@ export const httpAdmin: AdminService = {
   },
 
   getCourseContent: ({ token }, courseId) => nullOn404(apiRequest(`/courses/${enc(courseId)}/content`, { token })),
+  getLessonExercises: ({ token }, courseId, lessonId) =>
+    nullOn404(apiRequest(`/courses/${enc(courseId)}/lessons/${enc(lessonId)}/exercises`, { token })),
+  replaceLessonExercises: ({ token }, courseId, lessonId, exercises) =>
+    apiRequest(`/courses/${enc(courseId)}/lessons/${enc(lessonId)}/exercises`, { method: 'PUT', token, body: { exercises } }),
   addUnit: ({ token }, courseId, title) => apiRequest(`/courses/${enc(courseId)}/content/units`, { method: 'POST', token, body: { title } }),
   renameUnit: ({ token }, courseId, unitId, title) =>
     apiRequest(`/courses/${enc(courseId)}/content/units/${enc(unitId)}`, { method: 'PUT', token, body: { title } }),

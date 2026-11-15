@@ -2,8 +2,10 @@ import 'server-only';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { ApiError } from '@/lib/http/errors';
 import { MOCK_CONSENT_TEXT } from './consent';
+import type { CourseContent } from '@/types/content';
 import { createMockContent } from './content';
 import { diagnosticsOf } from './diagnostic';
+import { exercisesOf, replaceExercises } from './exercises';
 import type {
   AccountStatus,
   AdminConsent,
@@ -402,12 +404,31 @@ function checkOffering(input: SaveOfferingInput) {
 const toSessions = (input: SaveOfferingInput) =>
   input.sessions.map((s) => ({ id: s.id ?? randomUUID(), startsAt: s.startsAt, endsAt: s.endsAt, virtualLink: s.virtualLink }));
 
+// Contenido de los cursos (SCRUM-71): sesiones, enlaces y borradores; sin archivos (no hay almacenamiento en la demo).
+const mockAdminContent = createMockContent({
+  titleOf: (courseId) => store().courses.find((c) => c.id === courseId)?.title ?? null,
+  guard: requireAdmin,
+});
+
 export const mockAdmin: AdminService = {
-  // Contenido de los cursos (SCRUM-71): sesiones, enlaces y borradores; sin archivos (no hay almacenamiento en la demo).
-  ...createMockContent({
-    titleOf: (courseId) => store().courses.find((c) => c.id === courseId)?.title ?? null,
-    guard: requireAdmin,
-  }),
+  ...mockAdminContent,
+
+  async getLessonExercises(ctx, courseId, lessonId) {
+    requireAdmin(ctx);
+    await delay();
+    const content = await mockAdminContent.getCourseContent(ctx, courseId);
+    return content?.units.some((unit) => unit.lessons.some((item) => item.id === lessonId)) ? exercisesOf(lessonId) : null;
+  },
+
+  async replaceLessonExercises(ctx, courseId, lessonId, exercises) {
+    requireAdmin(ctx);
+    await delay();
+    const content = await mockAdminContent.getCourseContent(ctx, courseId);
+    if (!content?.units.some((unit) => unit.lessons.some((item) => item.id === lessonId))) {
+      throw new ApiError('not_found', 'Lección', 404, undefined, 'No encontramos esa lección en el curso.');
+    }
+    return replaceExercises(lessonId, exercises);
+  },
 
   async getSummary(ctx) {
     requireAdmin(ctx);
@@ -919,7 +940,40 @@ function requireTeacherSession(ctx: RequestContext, sessionId: string): SessionA
   return view;
 }
 
+/** Las sesiones PUBLICADAS de un curso que el profesor enseña (tiene un grupo en él); null si no lo enseña. */
+async function teacherCourseLessons(ctx: RequestContext, courseId: string): Promise<CourseContent | null> {
+  const me = requireTeacher(ctx);
+  if (!myOfferings(me.id).some((o) => o.courseId === courseId)) return null;
+  // El contenido del demo se lee con el rol del administrador: el acceso del profesor ya se verificó arriba.
+  const content = await mockAdminContent.getCourseContent({ ...ctx, user: { ...ctx.user, role: 'admin' } }, courseId);
+  if (!content) return null;
+  const units = content.units
+    .map((unit) => ({ ...unit, lessons: unit.lessons.filter((item) => item.isPublished) }))
+    .filter((unit) => unit.lessons.length > 0);
+  return { ...content, units };
+}
+
 export const mockTeacher: TeacherService = {
+  async getCourseLessons(ctx, courseId) {
+    await delay();
+    return teacherCourseLessons(ctx, courseId);
+  },
+
+  async getLessonExercises(ctx, courseId, lessonId) {
+    await delay();
+    const content = await teacherCourseLessons(ctx, courseId);
+    return content?.units.some((unit) => unit.lessons.some((item) => item.id === lessonId)) ? exercisesOf(lessonId) : null;
+  },
+
+  async replaceLessonExercises(ctx, courseId, lessonId, exercises) {
+    await delay();
+    const content = await teacherCourseLessons(ctx, courseId);
+    if (!content?.units.some((unit) => unit.lessons.some((item) => item.id === lessonId))) {
+      throw new ApiError('not_found', 'Lección', 404, undefined, 'No encontramos esa lección en tu curso.');
+    }
+    return replaceExercises(lessonId, exercises);
+  },
+
   async listGroups(ctx) {
     const me = requireTeacher(ctx);
     await delay();

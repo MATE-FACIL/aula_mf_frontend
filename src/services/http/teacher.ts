@@ -14,4 +14,9 @@ export const httpTeacher: TeacherService = {
     apiRequest(`/attendance/sessions/${enc(sessionId)}`, { method: 'PUT', token, body: { records } }),
   markRemainingPresent: ({ token }, sessionId) =>
     apiRequest(`/attendance/sessions/${enc(sessionId)}/present-all`, { method: 'POST', token }),
+  getCourseLessons: ({ token }, courseId) => nullOn404(apiRequest(`/teachers/me/courses/${enc(courseId)}/lessons`, { token })),
+  getLessonExercises: ({ token }, courseId, lessonId) =>
+    nullOn404(apiRequest(`/teachers/me/courses/${enc(courseId)}/lessons/${enc(lessonId)}/exercises`, { token })),
+  replaceLessonExercises: ({ token }, courseId, lessonId, exercises) =>
+    apiRequest(`/teachers/me/courses/${enc(courseId)}/lessons/${enc(lessonId)}/exercises`, { method: 'PUT', token, body: { exercises } }),
 };
