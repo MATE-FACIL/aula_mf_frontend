@@ -43,6 +43,7 @@ async function Group({ params }: Pick<Props, 'params'>) {
           <h1>{group.offeringName}</h1>
           <p>{group.courseTitle}</p>
         </div>
+        <Link className="btn btn--sm" href={`/profesor/cursos/${group.courseId}`}>Ejercicios de práctica</Link>
       </header>
       <div className={styles.summary}>
         <Kpi label="Alumnos" value={group.activeStudents} hint={`de ${group.maximumCapacity} cupos`} />

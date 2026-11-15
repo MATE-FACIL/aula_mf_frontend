@@ -71,7 +71,7 @@ import type {
 import type { FamilyConsent } from '@/types/consent';
 import type { ContentLesson, ContentUnit, CourseContent, LessonPayload, UploadGrant, UploadKind } from '@/types/content';
 import type { StudentCourseContent } from '@/types/content';
-import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
+import type { ExerciseAdmin, ExerciseInput, LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
 /** Contexto de cada llamada: el token de la sesión y el usuario ya verificado. */
@@ -222,6 +222,10 @@ export interface AdminService {
    * enlace https o un archivo ya subido (`fileId`). null si el curso no existe.
    */
   getCourseContent(ctx: RequestContext, courseId: string): Promise<CourseContent | null>;
+  /** Ejercicios de práctica de una sesión, CON la respuesta (solo el equipo). null si la sesión no es del curso. */
+  getLessonExercises(ctx: RequestContext, courseId: string, lessonId: string): Promise<ExerciseAdmin[] | null>;
+  /** Reemplaza la lista ordenada; los que faltan se archivan (los alumnos conservan su historial). */
+  replaceLessonExercises(ctx: RequestContext, courseId: string, lessonId: string, exercises: ExerciseInput[]): Promise<ExerciseAdmin[]>;
   addUnit(ctx: RequestContext, courseId: string, title: string): Promise<ContentUnit>;
   renameUnit(ctx: RequestContext, courseId: string, unitId: string, title: string): Promise<ContentUnit>;
   /** Solo una unidad sin sesiones; con sesiones responde 409. */
@@ -278,6 +282,11 @@ export interface TeacherService {
   markAttendance(ctx: RequestContext, sessionId: string, records: AttendanceMark[]): Promise<SessionAttendance>;
   /** «Asistencia en un clic»: quienes no tienen marca quedan presentes; lo ya marcado no cambia. */
   markRemainingPresent(ctx: RequestContext, sessionId: string): Promise<SessionAttendance>;
+  /** Sesiones publicadas de un curso que el profesor enseña (tiene un grupo en él); null si no es suyo. */
+  getCourseLessons(ctx: RequestContext, courseId: string): Promise<CourseContent | null>;
+  /** Ejercicios de una sesión de su curso, CON la respuesta. null si el curso no es suyo o la sesión no es de ese curso. */
+  getLessonExercises(ctx: RequestContext, courseId: string, lessonId: string): Promise<ExerciseAdmin[] | null>;
+  replaceLessonExercises(ctx: RequestContext, courseId: string, lessonId: string, exercises: ExerciseInput[]): Promise<ExerciseAdmin[]>;
 }
 
 /**

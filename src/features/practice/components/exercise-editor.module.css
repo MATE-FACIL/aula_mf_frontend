@@ -1,0 +1,15 @@
+.editor { display: grid; gap: 1rem; }
+.list { display: grid; gap: 1rem; }
+.card { display: grid; gap: .8rem; }
+.top { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; }
+.top h3 { font-size: 1rem; }
+.tools { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tools button { min-height: 2.5rem; min-width: 2.5rem; }
+.options { display: grid; gap: .5rem; }
+.option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .5rem; align-items: center; }
+.option input[type='radio'] { width: 1.4rem; height: 1.4rem; }
+.numbers { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.problem { color: var(--error); font-weight: 700; }
+.hint { color: var(--tx2); font-size: .85rem; }
+.footer { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; }
+.empty { color: var(--tx2); }

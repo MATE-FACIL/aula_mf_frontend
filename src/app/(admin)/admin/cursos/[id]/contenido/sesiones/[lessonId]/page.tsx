@@ -36,7 +36,9 @@ async function EditLesson({ params, searchParams }: Props) {
   return (
     <>
       <Link className="link" href={`/admin/cursos/${id}/contenido`}>← Contenido del curso</Link>
-      <PageHeader title={`Sesión ${lesson.number}`} description={content.courseTitle} />
+      <PageHeader title={`Sesión ${lesson.number}`} description={content.courseTitle}>
+        <Link className="btn btn--sm" href={`/admin/cursos/${id}/contenido/sesiones/${lessonId}/ejercicios`}>Ejercicios de práctica</Link>
+      </PageHeader>
       {query.creada !== undefined && (
         <p className={styles.note} role="status">Sesión creada. Ahora puedes subir el video y los materiales como archivos.</p>
       )}

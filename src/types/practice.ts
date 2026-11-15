@@ -3,6 +3,31 @@
 
 export type ExerciseKind = 'multiple_choice' | 'numeric';
 
+/** Un ejercicio tal como lo ve el equipo y el profesor: CON la respuesta correcta y la explicación (SCRUM-59). */
+export interface ExerciseAdmin {
+  id: string;
+  number: number;
+  kind: ExerciseKind;
+  prompt: string;
+  options: string[];
+  correctOption: number | null;
+  correctNumber: number | null;
+  tolerance: number;
+  explanation: string | null;
+}
+
+/** Lo que se guarda de un ejercicio. `id` conserva un ejercicio existente (y el historial de sus alumnos). */
+export interface ExerciseInput {
+  id: string | null;
+  kind: ExerciseKind;
+  prompt: string;
+  options: string[] | null;
+  correctOption: number | null;
+  correctNumber: number | null;
+  tolerance: number | null;
+  explanation: string | null;
+}
+
 /** percent: resueltos sobre disponibles; null cuando no hay ejercicios. */
 export interface PracticeProgress {
   solved: number;
