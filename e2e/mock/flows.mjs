@@ -169,6 +169,12 @@ const studentPage = await (async () => {
   return p;
 })();
 await studentPage.goto(`${base}/lecciones`, { waitUntil: 'networkidle' });
+// SCRUM-56: selector Matemáticas / Laboratorio y pestañas de la sesión
+check('lecciones: abre en Matemáticas con sus tres pestañas', await studentPage.getByRole('button', { name: /Matemáticas/ }).getAttribute('aria-pressed') === 'true'
+  && (await studentPage.getByRole('tab').filter({ visible: true }).count()) === 3);
+await studentPage.getByRole('button', { name: /Laboratorio/ }).click();
+check('lecciones: el selector cambia al laboratorio', await studentPage.getByRole('heading', { name: 'Crea tu primer personaje' }).isVisible());
+await studentPage.getByRole('button', { name: /Matemáticas/ }).click();
 await studentPage.getByRole('link', { name: 'Mis prácticas' }).click();
 await studentPage.waitForURL(/\/lecciones\/practica$/);
 const lessonLink = studentPage.getByRole('link', { name: /Sumar fracciones/ }).filter({ visible: true }).first();
@@ -226,6 +232,23 @@ await teacher.getByRole('heading', { name: 'Alumnos' }).waitFor({ timeout: 8000 
 const groupText = await teacher.locator('main').filter({ visible: true }).innerText();
 check('el grupo muestra clases y alumnos con su avance', /Clase 1/.test(groupText) && /resueltos|Sin ejercicios/.test(groupText), groupText.slice(0, 200));
 await teacher.screenshot({ path: join(output, 'profesor-grupo-tableta.png'), fullPage: true });
+// Evaluaciones (SCRUM-62/63): la profesora arma una en su grupo, con competencia por pregunta
+const groupUrl = teacher.url();
+await teacher.getByRole('link', { name: 'Nueva evaluación' }).click();
+await teacher.waitForURL(/\/evaluaciones\/nueva$/);
+await teacher.getByRole('textbox', { name: 'Título' }).fill('Semanal demo');
+await teacher.getByRole('button', { name: '+ Respuesta numérica' }).click();
+const question = teacher.locator('section[aria-label^="Ejercicio"]').filter({ visible: true });
+await question.getByLabel('Competencia que mide').selectOption('calculo');
+await question.getByRole('textbox', { name: 'Enunciado' }).fill('¿Cuánto es 7 ÷ 2?');
+await question.getByLabel('Número correcto').fill('3,5');
+check('evaluación: el formulario no se desborda en tableta', await noHorizontalScroll(teacher));
+await teacher.getByRole('button', { name: 'Crear evaluación' }).click();
+await teacher.waitForURL(/\/profesor\/evaluaciones\/[0-9a-f-]{36}/);
+await teacher.getByText('Evaluación creada').waitFor({ timeout: 8000 });
+check('evaluación: se crea como borrador y muestra su pregunta', await teacher.getByText('Borrador: los alumnos todavía no la ven').isVisible());
+await teacher.goto(groupUrl, { waitUntil: 'networkidle' });
+check('evaluación: aparece en el grupo con su estado', await teacher.getByText('Semanal demo').first().isVisible() && await teacher.getByText('Borrador').first().isVisible());
 const take = teacher.getByRole('link', { name: /Tomar asistencia|Ver o corregir/ }).filter({ visible: true }).first();
 await take.click();
 await teacher.waitForURL(/\/clases\/[0-9a-f-]{36}\?n=1/);

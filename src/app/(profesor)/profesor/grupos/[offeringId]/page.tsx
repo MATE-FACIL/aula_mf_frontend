@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Kpi, PageSkeleton, SectionTitle } from '@/components/ui/primitives';
 import { isUuid } from '@/features/admin/validation';
+import { GroupEvaluations } from '@/features/evaluations/components/teacher-evaluations';
 import { SessionsTable, StudentsTable } from '@/features/teacher/components/teacher';
 import styles from '@/features/teacher/components/teacher.module.css';
 import { requireSession } from '@/server/auth/dal';
@@ -28,7 +29,7 @@ async function Group({ params }: Pick<Props, 'params'>) {
   const [ctx, { offeringId }] = await Promise.all([requireSession('teacher'), params]);
   if (!isUuid(offeringId)) notFound();
   // UNA petición: el backend arma clases, asistencia y avance de práctica con un número fijo de consultas.
-  const detail = await services.teacher.getGroup(ctx, offeringId);
+  const [detail, evaluations] = await Promise.all([services.teacher.getGroup(ctx, offeringId), services.teacher.listEvaluations(ctx, offeringId)]);
   if (!detail) notFound();
 
   const { group, students, sessions } = detail;
@@ -43,6 +44,7 @@ async function Group({ params }: Pick<Props, 'params'>) {
           <h1>{group.offeringName}</h1>
           <p>{group.courseTitle}</p>
         </div>
+        <Link className="btn btn--sm" href={`/profesor/cursos/${group.courseId}`}>Ejercicios de práctica</Link>
       </header>
       <div className={styles.summary}>
         <Kpi label="Alumnos" value={group.activeStudents} hint={`de ${group.maximumCapacity} cupos`} />
@@ -52,6 +54,9 @@ async function Group({ params }: Pick<Props, 'params'>) {
       <section className="section" aria-labelledby="classes-title">
         <SectionTitle title={<span id="classes-title">Clases</span>} />
         <SessionsTable detail={detail} now={ctx.requestedAt} />
+      </section>
+      <section className="section" aria-labelledby="evaluations-title">
+        <GroupEvaluations offeringId={offeringId} evaluations={evaluations ?? []} now={ctx.requestedAt} />
       </section>
       <section className="section" aria-labelledby="students-title">
         <SectionTitle title={<span id="students-title">Alumnos</span>} />

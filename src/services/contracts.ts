@@ -70,7 +70,9 @@ import type {
 } from '@/types/diagnostic';
 import type { FamilyConsent } from '@/types/consent';
 import type { ContentLesson, ContentUnit, CourseContent, LessonPayload, UploadGrant, UploadKind } from '@/types/content';
-import type { LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
+import type { StudentCourseContent } from '@/types/content';
+import type { Competency, EvaluationPayload, EvaluationResults, TeacherEvaluation, TeacherEvaluationDetail } from '@/types/evaluations';
+import type { ExerciseAdmin, ExerciseInput, LessonPractice, PracticeAnswerResult, PracticeCourse } from '@/types/practice';
 import type { TeacherGroup, TeacherGroupDetail } from '@/types/teacher';
 
 /** Contexto de cada llamada: el token de la sesión y el usuario ya verificado. */
@@ -221,6 +223,10 @@ export interface AdminService {
    * enlace https o un archivo ya subido (`fileId`). null si el curso no existe.
    */
   getCourseContent(ctx: RequestContext, courseId: string): Promise<CourseContent | null>;
+  /** Ejercicios de práctica de una sesión, CON la respuesta (solo el equipo). null si la sesión no es del curso. */
+  getLessonExercises(ctx: RequestContext, courseId: string, lessonId: string): Promise<ExerciseAdmin[] | null>;
+  /** Reemplaza la lista ordenada; los que faltan se archivan (los alumnos conservan su historial). */
+  replaceLessonExercises(ctx: RequestContext, courseId: string, lessonId: string, exercises: ExerciseInput[]): Promise<ExerciseAdmin[]>;
   addUnit(ctx: RequestContext, courseId: string, title: string): Promise<ContentUnit>;
   renameUnit(ctx: RequestContext, courseId: string, unitId: string, title: string): Promise<ContentUnit>;
   /** Solo una unidad sin sesiones; con sesiones responde 409. */
@@ -277,6 +283,21 @@ export interface TeacherService {
   markAttendance(ctx: RequestContext, sessionId: string, records: AttendanceMark[]): Promise<SessionAttendance>;
   /** «Asistencia en un clic»: quienes no tienen marca quedan presentes; lo ya marcado no cambia. */
   markRemainingPresent(ctx: RequestContext, sessionId: string): Promise<SessionAttendance>;
+  /** Sesiones publicadas de un curso que el profesor enseña (tiene un grupo en él); null si no es suyo. */
+  getCourseLessons(ctx: RequestContext, courseId: string): Promise<CourseContent | null>;
+  /** Ejercicios de una sesión de su curso, CON la respuesta. null si el curso no es suyo o la sesión no es de ese curso. */
+  getLessonExercises(ctx: RequestContext, courseId: string, lessonId: string): Promise<ExerciseAdmin[] | null>;
+  replaceLessonExercises(ctx: RequestContext, courseId: string, lessonId: string, exercises: ExerciseInput[]): Promise<ExerciseAdmin[]>;
+
+  // Evaluaciones de sus grupos (SCRUM-62/63). Un grupo o una evaluación que no es suya → null / 404.
+  listCompetencies(ctx: RequestContext): Promise<Competency[]>;
+  listEvaluations(ctx: RequestContext, offeringId: string): Promise<TeacherEvaluation[] | null>;
+  getEvaluation(ctx: RequestContext, evaluationId: string): Promise<TeacherEvaluationDetail | null>;
+  createEvaluation(ctx: RequestContext, offeringId: string, payload: EvaluationPayload): Promise<TeacherEvaluationDetail>;
+  /** Con alumnos que ya empezaron no se pueden cambiar las preguntas (409); sí el título y el plazo. */
+  updateEvaluation(ctx: RequestContext, evaluationId: string, payload: EvaluationPayload): Promise<TeacherEvaluationDetail>;
+  deleteEvaluation(ctx: RequestContext, evaluationId: string): Promise<void>;
+  getEvaluationResults(ctx: RequestContext, evaluationId: string): Promise<EvaluationResults | null>;
 }
 
 /**
@@ -297,6 +318,11 @@ export interface DiagnosticService {
   confirm(ctx: RequestContext, attemptId: string, level: string): Promise<DiagnosticReview>;
 }
 
+/** Lecciones reales del alumno (SCRUM-56): sus cursos con las sesiones publicadas, video y materiales. */
+export interface StudentContentService {
+  listCourses(ctx: RequestContext): Promise<StudentCourseContent[]>;
+}
+
 export interface Services {
   auth: AuthService;
   students: StudentService;
@@ -310,4 +336,5 @@ export interface Services {
   practice: PracticeService;
   teacher: TeacherService;
   diagnostic: DiagnosticService;
+  studentContent: StudentContentService;
 }

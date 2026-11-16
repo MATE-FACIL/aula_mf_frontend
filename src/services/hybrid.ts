@@ -6,7 +6,10 @@ import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
 import { httpDiagnostic } from './http/diagnostic';
+import { httpAssessments } from './http/assessments';
 import { httpPractice } from './http/practice';
+import { buildLearningPath } from './http/learning-path';
+import { httpStudentContent } from './http/student-content';
 import { httpTeacher } from './http/teacher';
 import { fetchStudentAttendance } from './http/student-attendance';
 import { upcoming } from './http/live-schedule';
@@ -43,6 +46,7 @@ export const hybridServices: Services = {
   practice: httpPractice,
   teacher: httpTeacher,
   diagnostic: httpDiagnostic,
+  studentContent: httpStudentContent,
   students: {
     ...demoStudents,
     // Mock y clases reales en paralelo: una sola espera.
@@ -50,11 +54,17 @@ export const hybridServices: Services = {
       const [dashboard, live] = await Promise.all([demoStudents.getDashboard(ctx), fetchLiveSchedule(ctx)]);
       return { ...dashboard, classes: upcoming(live.classes, Date.now()) };
     },
+    // Mi ruta (SCRUM-57): nivel, avance y sesiones reales; frecuencia y laboratorios del año siguen de ejemplo.
+    async getLearningPath(ctx) {
+      const [base, courses, practice] = await Promise.all([demoStudents.getLearningPath(ctx), httpStudentContent.listCourses(ctx), httpPractice.listCourses(ctx)]);
+      return buildLearningPath(base, courses, practice);
+    },
   },
   notifications: withDemoUser(mockServices.notifications),
   lessons: withDemoUser(mockServices.lessons),
   tutor: withDemoUser(mockServices.tutor),
-  assessments: withDemoUser(mockServices.assessments),
+  // Evaluaciones reales (SCRUM-62/63): el backend corrige, pone la nota sobre 20 y controla el plazo.
+  assessments: httpAssessments,
   schedule: {
     ...demoSchedule,
     // Clases y asistencia reales (SCRUM-50/53) junto a las tareas de ejemplo: tres fuentes, una sola espera.

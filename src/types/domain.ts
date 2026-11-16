@@ -38,7 +38,8 @@ export interface StudentProfile {
   lab: { name: string; area: LabArea; month: string; progress: number };
 }
 
-export type LessonStatus = 'done' | 'current' | 'locked';
+/** `open`: publicada y por hacer, sin ser la siguiente (el alumno puede abrirla cuando quiera). */
+export type LessonStatus = 'done' | 'current' | 'open' | 'locked';
 
 export interface LessonSummary {
   id: string;
@@ -153,8 +154,9 @@ export interface TutorReply {
 
 // ─── Evaluaciones ──────────────────────────────────────────────────────
 
-export type EvaluationKind = 'Prueba de entrada' | 'Semanal' | 'Laboratorio';
-export type EvaluationStatus = 'graded' | 'available' | 'upcoming';
+export type EvaluationKind = 'Prueba de entrada' | 'Semanal' | 'Intermedia' | 'Final' | 'Laboratorio';
+/** `missed`: el plazo terminó sin que el alumno la enviara. */
+export type EvaluationStatus = 'graded' | 'available' | 'upcoming' | 'missed';
 
 export interface EvaluationSummary {
   id: string;
