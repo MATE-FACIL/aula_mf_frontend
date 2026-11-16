@@ -5,6 +5,7 @@ import { MOCK_CONSENT_TEXT } from './consent';
 import type { CourseContent } from '@/types/content';
 import { createMockContent } from './content';
 import { diagnosticsOf } from './diagnostic';
+import { createMockEvaluations } from './evaluations';
 import { exercisesOf, replaceExercises } from './exercises';
 import type {
   AccountStatus,
@@ -953,7 +954,19 @@ async function teacherCourseLessons(ctx: RequestContext, courseId: string): Prom
   return { ...content, units };
 }
 
+// Evaluaciones de sus grupos (SCRUM-62/63): solo de los grupos que tiene asignados.
+const mockEvaluations = createMockEvaluations((ctx, offeringId) => {
+  const offering = myOfferings(requireTeacher(ctx).id).find((o) => o.id === offeringId);
+  if (!offering) return null;
+  const students = activeStudentIds(offering.id)
+    .map((id) => store().people.find((p) => p.id === id))
+    .filter((p): p is Person => Boolean(p))
+    .map((p) => ({ id: p.id, fullName: fullName(p) }));
+  return { offeringId: offering.id, courseId: offering.courseId, students };
+});
+
 export const mockTeacher: TeacherService = {
+  ...mockEvaluations,
   async getCourseLessons(ctx, courseId) {
     await delay();
     return teacherCourseLessons(ctx, courseId);

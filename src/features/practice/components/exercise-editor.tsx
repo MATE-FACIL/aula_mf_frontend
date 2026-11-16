@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState, useState, type FormEvent } from 'react';
 import { useResultToast } from '@/features/admin/components/action-form';
+import type { Competency } from '@/types/evaluations';
 import type { ExerciseAdmin, ExerciseKind } from '@/types/practice';
 import { saveExercisesAction } from '../editor-actions';
 import {
@@ -86,11 +87,13 @@ export function ExerciseEditor({ scope, courseId, lessonId, exercises }: {
   );
 }
 
-function ExerciseCard({ draft, index, count, problem, onChange, onMove, onRemove }: {
+/** Un ejercicio del editor. Con `competencies` (preguntas de una evaluación) pide también la competencia que mide. */
+export function ExerciseCard({ draft, index, count, problem, competencies, onChange, onMove, onRemove }: {
   draft: ExerciseDraft;
   index: number;
   count: number;
   problem?: string;
+  competencies?: Competency[];
   onChange: (patch: Partial<ExerciseDraft>) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
@@ -114,6 +117,16 @@ function ExerciseCard({ draft, index, count, problem, onChange, onMove, onRemove
             {Object.entries(KIND_LABEL).map(([kind, text]) => <option key={kind} value={kind}>{text}</option>)}
           </select>
         </label>
+
+        {competencies && (
+          <label className="label">
+            Competencia que mide
+            <select className="input" value={draft.competency} onChange={(event) => onChange({ competency: event.target.value })}>
+              <option value="">Elige una…</option>
+              {competencies.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+            </select>
+          </label>
+        )}
 
         <label className="label">
           Enunciado

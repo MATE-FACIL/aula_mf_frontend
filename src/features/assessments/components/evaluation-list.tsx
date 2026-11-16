@@ -17,7 +17,7 @@ export function EvaluationList({ items, renderAction }: { items: EvaluationSumma
           {e.score !== null ? (
             <span className={styles.score}>{e.score} %</span>
           ) : (
-            renderAction?.(e) ?? <span className={styles.upcoming}>{e.status === 'available' ? 'Por rendir' : 'Próxima'}</span>
+            renderAction?.(e) ?? <span className={styles.upcoming}>{e.status === 'available' ? 'Por rendir' : e.status === 'missed' ? 'Sin rendir' : 'Próxima'}</span>
           )}
         </li>
       ))}
