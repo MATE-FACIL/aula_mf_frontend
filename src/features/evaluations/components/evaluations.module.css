@@ -1,0 +1,28 @@
+.form { display: grid; gap: 1rem; }
+.fields { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.wide { grid-column: 1 / -1; }
+.check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 600; }
+.check input { width: 1.3rem; height: 1.3rem; margin-top: .1rem; flex: none; }
+.hint { color: var(--tx2); font-size: .88rem; }
+.problem { color: var(--error); font-weight: 700; }
+.note { background: var(--aviso-fondo); color: var(--aviso); padding: .7rem .9rem; border-radius: .7rem; font-weight: 600; }
+.questions { display: grid; gap: 1rem; }
+.locked { border: 0; padding: 0; margin: 0; min-width: 0; }
+.tools { display: flex; flex-wrap: wrap; gap: .5rem; }
+.footer { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; }
+.danger { margin-top: 1rem; }
+
+.list { display: grid; gap: .6rem; }
+.row { display: grid; gap: .3rem .8rem; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.row b { overflow-wrap: anywhere; }
+.row small { color: var(--tx2); }
+.status { font-weight: 800; font-size: .85rem; }
+.rowLinks { display: flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 560px) { .row { grid-template-columns: minmax(0, 1fr); } }
+
+.competencies { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.competency { display: grid; gap: .35rem; padding: .8rem; }
+.competency b { font-size: .95rem; }
+.late { color: var(--aviso); font-weight: 700; }
+.muted { color: var(--tx2); }
+.small { display: block; color: var(--tx2); font-size: .82rem; }

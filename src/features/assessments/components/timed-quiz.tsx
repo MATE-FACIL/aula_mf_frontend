@@ -112,7 +112,7 @@ export function TimedQuiz({ attempt, receivedAt, clockOffsetMs, onFinished }: Pr
                 className={cn('input', styles.answer)}
                 name={q.id}
                 autoComplete="off"
-                inputMode={q.type === 'number' ? 'numeric' : 'text'}
+                inputMode={q.type === 'number' ? 'decimal' : 'text'}
                 aria-label={`Respuesta ${i + 1}`}
                 placeholder={q.type === 'fraction' ? 'Ej.: 3/4' : 'Ej.: 8'}
                 maxLength={20}
@@ -130,7 +130,7 @@ export function TimedQuiz({ attempt, receivedAt, clockOffsetMs, onFinished }: Pr
       {result ? (
         <div className={styles.result} aria-live="polite">
           <b className={styles.resultScore}>{result.score} %</b>
-          <span>{result.correctCount} de {result.total} correctas · {result.points} de 20 puntos</span>
+          <span>{result.correctCount} de {result.total} correctas · {String(result.points).replace('.', ',')} de 20 puntos</span>
           {result.late && <span className={styles.lateTag}>Enviada fuera de tiempo: tu profesor lo verá en el registro.</span>}
           <ul>
             {result.byCompetency.map((c) => <li key={c.competency}><b>{c.competency}</b>: {c.correct} de {c.total}</li>)}

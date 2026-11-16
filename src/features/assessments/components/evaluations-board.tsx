@@ -52,7 +52,7 @@ export function EvaluationsBoard({ initial, startLevel, currentLevel }: Props) {
 
   const finished = useCallback((result: QuizResult) => {
     setEvaluations((list) =>
-      list.map((e) => (e.id === active?.evaluationId ? { ...e, status: 'graded', score: result.score, resultLabel: `${result.points} de 20 puntos`, dateLabel: 'Hoy' } : e)),
+      list.map((e) => (e.id === active?.evaluationId ? { ...e, status: 'graded', score: result.score, resultLabel: `${String(result.points).replace('.', ',')} de 20 puntos`, dateLabel: 'Hoy' } : e)),
     );
     session.emit({ type: 'evaluation-finished', score: result.score });
     notify(`Evaluación calificada: ${result.score} %`, 'success');

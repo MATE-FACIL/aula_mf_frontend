@@ -154,8 +154,9 @@ export interface TutorReply {
 
 // ─── Evaluaciones ──────────────────────────────────────────────────────
 
-export type EvaluationKind = 'Prueba de entrada' | 'Semanal' | 'Laboratorio';
-export type EvaluationStatus = 'graded' | 'available' | 'upcoming';
+export type EvaluationKind = 'Prueba de entrada' | 'Semanal' | 'Intermedia' | 'Final' | 'Laboratorio';
+/** `missed`: el plazo terminó sin que el alumno la enviara. */
+export type EvaluationStatus = 'graded' | 'available' | 'upcoming' | 'missed';
 
 export interface EvaluationSummary {
   id: string;

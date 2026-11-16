@@ -14,6 +14,15 @@ export const httpTeacher: TeacherService = {
     apiRequest(`/attendance/sessions/${enc(sessionId)}`, { method: 'PUT', token, body: { records } }),
   markRemainingPresent: ({ token }, sessionId) =>
     apiRequest(`/attendance/sessions/${enc(sessionId)}/present-all`, { method: 'POST', token }),
+  listCompetencies: ({ token }) => apiRequest('/teachers/me/competencies', { token }),
+  listEvaluations: ({ token }, offeringId) => nullOn404(apiRequest(`/teachers/me/groups/${enc(offeringId)}/evaluations`, { token })),
+  getEvaluation: ({ token }, evaluationId) => nullOn404(apiRequest(`/teachers/me/evaluations/${enc(evaluationId)}`, { token })),
+  createEvaluation: ({ token }, offeringId, payload) =>
+    apiRequest(`/teachers/me/groups/${enc(offeringId)}/evaluations`, { method: 'POST', token, body: payload }),
+  updateEvaluation: ({ token }, evaluationId, payload) =>
+    apiRequest(`/teachers/me/evaluations/${enc(evaluationId)}`, { method: 'PUT', token, body: payload }),
+  deleteEvaluation: ({ token }, evaluationId) => apiRequest(`/teachers/me/evaluations/${enc(evaluationId)}`, { method: 'DELETE', token }),
+  getEvaluationResults: ({ token }, evaluationId) => nullOn404(apiRequest(`/teachers/me/evaluations/${enc(evaluationId)}/results`, { token })),
   getCourseLessons: ({ token }, courseId) => nullOn404(apiRequest(`/teachers/me/courses/${enc(courseId)}/lessons`, { token })),
   getLessonExercises: ({ token }, courseId, lessonId) =>
     nullOn404(apiRequest(`/teachers/me/courses/${enc(courseId)}/lessons/${enc(lessonId)}/exercises`, { token })),

@@ -8,6 +8,7 @@ import { fetchLiveSchedule } from './classes';
 import { fetchStudentAttendance } from './student-attendance';
 import { httpConsent } from './consent';
 import { fetchChildren } from './family';
+import { httpAssessments } from './assessments';
 import { httpPractice } from './practice';
 import { httpStudentContent } from './student-content';
 import { httpTeacher } from './teacher';
@@ -50,12 +51,7 @@ export const httpServices: Services = {
     ask: ({ token }, request) => apiRequest('/tutor/ask', { method: 'POST', token, body: request, timeoutMs: 20_000 }),
   },
 
-  assessments: {
-    list: ({ token }) => apiRequest('/students/me/evaluations', { token }),
-    start: ({ token }, evaluationId) => apiRequest(`/evaluations/${enc(evaluationId)}/attempts`, { method: 'POST', token }),
-    submit: ({ token }, attemptId, answers) =>
-      apiRequest(`/evaluations/attempts/${enc(attemptId)}/submit`, { method: 'POST', token, body: { answers } }),
-  },
+  assessments: httpAssessments,
 
   schedule: {
     // Clases, calendario (SCRUM-50/51/52) y asistencia (SCRUM-53) reales, en paralelo. Tareas y materiales aún no existen.

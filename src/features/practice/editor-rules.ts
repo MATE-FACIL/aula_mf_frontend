@@ -21,13 +21,15 @@ export interface ExerciseDraft {
   correctNumber: string;
   tolerance: string;
   explanation: string;
+  /** Solo en las preguntas de una evaluación: qué competencia mide. */
+  competency: string;
 }
 
 let counter = 0;
 const nextKey = () => `e${++counter}`;
 
 export function blankDraft(kind: ExerciseKind = 'multiple_choice'): ExerciseDraft {
-  return { key: nextKey(), id: null, kind, prompt: '', options: ['', ''], correctOption: null, correctNumber: '', tolerance: '0', explanation: '' };
+  return { key: nextKey(), id: null, kind, prompt: '', options: ['', ''], correctOption: null, correctNumber: '', tolerance: '0', explanation: '', competency: '' };
 }
 
 export function toDrafts(exercises: ExerciseAdmin[]): ExerciseDraft[] {
@@ -41,6 +43,7 @@ export function toDrafts(exercises: ExerciseAdmin[]): ExerciseDraft[] {
     correctNumber: item.correctNumber === null ? '' : String(item.correctNumber).replace('.', ','),
     tolerance: String(item.tolerance).replace('.', ','),
     explanation: item.explanation ?? '',
+    competency: '',
   }));
 }
 
@@ -60,17 +63,18 @@ export function removeOption(draft: ExerciseDraft, index: number): ExerciseDraft
 }
 
 /** Un mensaje por ejercicio con problema (posición → mensaje; -1 es el de toda la lista); vacío si todo está bien. */
-export function validateDrafts(drafts: ExerciseDraft[]): Record<number, string> {
+export function validateDrafts(drafts: ExerciseDraft[], requireCompetency = false): Record<number, string> {
   const errors: Record<number, string> = {};
   if (drafts.length > MAX_EXERCISES) errors[-1] = `Una lección admite como máximo ${MAX_EXERCISES} ejercicios.`;
   drafts.forEach((draft, index) => {
-    const problem = problemOf(draft);
+    const problem = problemOf(draft, requireCompetency);
     if (problem) errors[index] = problem;
   });
   return errors;
 }
 
-function problemOf(draft: ExerciseDraft): string | null {
+function problemOf(draft: ExerciseDraft, requireCompetency: boolean): string | null {
+  if (requireCompetency && !draft.competency) return 'Elige la competencia que mide.';
   const prompt = draft.prompt.trim();
   if (!prompt) return 'Escribe el enunciado.';
   if (prompt.length > MAX_PROMPT) return `El enunciado admite como máximo ${MAX_PROMPT} caracteres.`;
@@ -99,10 +103,24 @@ export function toInputs(drafts: ExerciseDraft[]): ExerciseInput[] {
   });
 }
 
+/** Una pregunta de una evaluación: un ejercicio más su competencia (null en un ejercicio de práctica). */
+export interface EvaluationQuestionInput extends ExerciseInput {
+  competency: string | null;
+}
+
+const COMPETENCY_RE = /^[a-z_]{1,30}$/;
+export function toQuestions(drafts: ExerciseDraft[]): EvaluationQuestionInput[] {
+  return toInputs(drafts).map((input, index) => ({ ...input, id: null, competency: drafts[index].competency }));
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** El JSON que llega a la Server Action: se vuelve a validar en el servidor (el navegador no es de fiar). */
 export function parseInputs(raw: unknown): ExerciseInput[] | null {
+  return parseList(raw, false);
+}
+
+function parseList(raw: unknown, withCompetency: boolean): EvaluationQuestionInput[] | null {
   if (typeof raw !== 'string' || raw.length > 400_000) return null;
   let value: unknown;
   try {
@@ -110,12 +128,23 @@ export function parseInputs(raw: unknown): ExerciseInput[] | null {
   } catch {
     return null;
   }
-  if (!Array.isArray(value) || value.length > MAX_EXERCISES) return null;
-  const inputs: ExerciseInput[] = [];
+  return parseValues(value, withCompetency, MAX_EXERCISES);
+}
+
+/** Las preguntas de una evaluación ya leídas de un JSON: cada una con su competencia, hasta `max`. */
+export function parseQuestionValues(value: unknown, max: number): EvaluationQuestionInput[] | null {
+  return parseValues(value, true, max);
+}
+
+function parseValues(value: unknown, withCompetency: boolean, max: number): EvaluationQuestionInput[] | null {
+  if (!Array.isArray(value) || value.length > max) return null;
+  const inputs: EvaluationQuestionInput[] = [];
   for (const item of value) {
     const input = parseInput(item);
     if (!input) return null;
-    inputs.push(input);
+    const competency = (item as Record<string, unknown>).competency;
+    if (withCompetency && !(typeof competency === 'string' && COMPETENCY_RE.test(competency))) return null;
+    inputs.push(withCompetency ? { ...input, competency: competency as string } : { ...input, competency: null });
   }
   return inputs;
 }

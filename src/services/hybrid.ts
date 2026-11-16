@@ -6,6 +6,7 @@ import { backendAuth } from './http/auth';
 import { fetchLiveSchedule } from './http/classes';
 import { fetchChildren } from './http/family';
 import { httpDiagnostic } from './http/diagnostic';
+import { httpAssessments } from './http/assessments';
 import { httpPractice } from './http/practice';
 import { buildLearningPath } from './http/learning-path';
 import { httpStudentContent } from './http/student-content';
@@ -62,7 +63,8 @@ export const hybridServices: Services = {
   notifications: withDemoUser(mockServices.notifications),
   lessons: withDemoUser(mockServices.lessons),
   tutor: withDemoUser(mockServices.tutor),
-  assessments: withDemoUser(mockServices.assessments),
+  // Evaluaciones reales (SCRUM-62/63): el backend corrige, pone la nota sobre 20 y controla el plazo.
+  assessments: httpAssessments,
   schedule: {
     ...demoSchedule,
     // Clases y asistencia reales (SCRUM-50/53) junto a las tareas de ejemplo: tres fuentes, una sola espera.
